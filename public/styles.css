@@ -3329,3 +3329,249 @@ svg {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     }
 }
+
+/* ========================================
+   🎵 TOP 10 - PURE YOUTUBE MUSIC STYLE
+   ======================================== */
+
+@media (max-width: 768px) {
+    .top10-section {
+        padding: 16px;
+        background: var(--bg-primary);
+    }
+    
+    .section-title-wrapper {
+        margin-bottom: 12px;
+    }
+    
+    /* Clean 2-Column Grid */
+    .top10-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 0;
+    }
+    
+    /* Card Container */
+    .top10-song-card {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bg-elevated);
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    
+    .top10-song-card:active {
+        transform: scale(0.98);
+    }
+    
+    /* Album Art - Full Card */
+    .top10-song-art {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding-bottom: 0 !important;
+    }
+    
+    .top10-song-art img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    /* Dark gradient for text readability */
+    .top10-song-art::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 40%;
+        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+        pointer-events: none;
+    }
+    
+    /* Number Badge - Top Left (YouTube Style) */
+    .top10-rank {
+        position: absolute !important;
+        top: 6px !important;
+        left: 6px !important;
+        bottom: auto !important;
+        right: auto !important;
+        width: 24px !important;
+        height: 24px !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 4px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.75em !important;
+        font-weight: 700 !important;
+        color: white !important;
+        z-index: 10 !important;
+        -webkit-text-stroke: 0 !important;
+        text-stroke: 0 !important;
+        filter: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        line-height: 1 !important;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    
+    /* Hide any extra badge content */
+    .top10-rank::after,
+    .top10-rank::before {
+        display: none !important;
+    }
+    
+    /* Gold for #1 */
+    .top10-song-card:nth-child(1) .top10-rank {
+        background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+        color: #000 !important;
+        font-weight: 900 !important;
+    }
+    
+    /* Info Overlay - Inside Card at Bottom */
+    .top10-song-info {
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 8px !important;
+        z-index: 5 !important;
+        background: transparent !important;
+    }
+    
+    /* Song Title */
+    .top10-song-title {
+        font-size: 0.8em !important;
+        font-weight: 600 !important;
+        color: white !important;
+        margin: 0 0 2px 0 !important;
+        line-height: 1.2 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 1 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+    }
+    
+    /* Artist Name */
+    .top10-song-artist {
+        font-size: 0.65em !important;
+        font-weight: 400 !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 1 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+    }
+    
+    /* Hide extra elements */
+    .top10-song-language,
+    .top10-song-company {
+        display: none !important;
+    }
+    
+    /* Play overlay on tap */
+    .top10-song-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.15s;
+        z-index: 20;
+        pointer-events: none;
+    }
+    
+    .top10-song-card:active .top10-song-overlay {
+        opacity: 1;
+    }
+    
+    .top10-song-overlay svg {
+        width: 18px;
+        height: 18px;
+        color: #000;
+        margin-left: 2px;
+    }
+    
+    /* Playing state */
+    .top10-song-card.playing {
+        box-shadow: 0 0 0 2px var(--stage-red);
+    }
+    
+    /* Remove hover effects on mobile */
+    .top10-song-card:hover {
+        transform: none !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+    }
+    
+    .top10-song-card:hover .top10-rank {
+        transform: none !important;
+        filter: none !important;
+        opacity: 1 !important;
+    }
+}
+
+/* Smaller phones */
+@media (max-width: 480px) {
+    .top10-section {
+        padding: 12px;
+    }
+    
+    .top10-grid {
+        gap: 6px;
+    }
+    
+    .top10-song-card {
+        border-radius: 6px;
+    }
+    
+    .top10-rank {
+        top: 4px !important;
+        left: 4px !important;
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 0.7em !important;
+    }
+    
+    .top10-song-info {
+        padding: 6px !important;
+    }
+    
+    .top10-song-title {
+        font-size: 0.75em !important;
+    }
+    
+    .top10-song-artist {
+        font-size: 0.6em !important;
+    }
+}
+
+/* Desktop unchanged */
+@media (min-width: 769px) {
+    .top10-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
