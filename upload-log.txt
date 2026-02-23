@@ -1,0 +1,797 @@
+[dotenv@17.2.4] injecting env (12) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+
+======================================================================
+   🎵 Stage Music - Smart Bulk Upload v3 🎵
+   Supports: Any CSV Format + Singles + Albums
+======================================================================
+
+🔍 Verifying S3 connection...
+(node:65931) NOTE: The AWS SDK for JavaScript (v2) has reached end-of-support.
+It will no longer receive updates or releases.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ S3 bucket accessible
+
+📄 Reading CSV file...
+📋 CSV Headers detected:
+   Sr No. → sr_no
+   Song_Name → title
+   Album_Name → album_name
+   Wave Audio → wave_audio
+   Audio_Files → audio_file
+   Cover_File → cover_file
+   Singer → singer
+   Lyricist → lyricist
+   Music_Director → music_director
+   Composer → composer
+   Record_Label/Company → company
+   Langauage → language
+
+✅ Found 96 songs
+
+📊 Upload Summary:
+   🎵 Single Songs: 15
+   📀 Albums: 25 (81 songs)
+
+⚠️  Ready to upload. Press Ctrl+C to cancel, or wait 5 seconds...
+
+🚀 Starting upload...
+
+======================================================================
+
+📍 UPLOADING SINGLE SONGS
+
+
+[1] 🎵 Single Song: Chaudhar - Amit dhull
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 23)
+
+[2] 🎵 Single Song: Dehleez - Raj Mawar
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 24)
+
+[3] 🎵 Single Song: Ghunghat - 
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 25)
+
+[4] 🎵 Single Song: Akhada - BINTU PABRA
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 26)
+
+[5] 🎵 Single Song: College Kaand - KABEER feat. NJLee / Akash / Waris
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 27)
+
+[6] 🎵 Single Song: Piya - 12 Aala Pyar - Kamal Pegan
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 28)
+
+[7] 🎵 Single Song: Dhaakad Chhoriyaan - "Isha Khanna
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 29)
+
+[8] 🎵 Single Song: Nash nash mh Dard tera - Sanki Ashiq - Subh Panchal
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 30)
+
+[9] 🎵 Single Song: Desi Panchayat - 
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 31)
+
+[10] 🎵 Single Song: Thokar - Harjaana - Vivek Gagat
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 32)
+
+[11] 🎵 Single Song: Kawad Haridwar Tai - Rajesh Singhpuria
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 33)
+
+[12] 🎵 Single Song: Piya Ji - Gawahi - Vikas Bedi
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 34)
+
+[13] 🎵 Single Song: Boojha - Ravinder RSR
+   ❌ Error: Audio not found: Song72.wav
+
+[14] 🎵 Single Song: Bharatpur Lut Gayo - Anda Gang - "AVINASH SELOTHI
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   📤 Uploading cover...
+   ✅ Cover uploaded
+   💾 Database updated (Song ID: 35)
+
+[15] 🎵 Single Song: Maatti Gelyan Maatti - Muawza - Tarun Panchal
+   📤 Uploading audio...
+   ✅ Audio uploaded
+   💾 Database updated (Song ID: 36)
+
+
+📍 UPLOADING ALBUMS
+
+
+📀 Album: Mere Yaar Ki Shaadi (2 songs)
+   Artist: PRASHANT KHAIRWAL
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 4)
+
+   [1/2] Kamal Ho Gaya
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 37)
+
+   [2/2] Mere Yaar Ki Shaadi
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 38)
+
+   ✅ Album "Mere Yaar Ki Shaadi" complete!
+
+📀 Album: Group - D S1 (2 songs)
+   Artist: Sunil Balhara
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 5)
+
+   [1/2] Panwasi Ka Chand
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 39)
+
+   [2/2] Group - D Title Song
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 40)
+
+   ✅ Album "Group - D S1" complete!
+
+📀 Album: Group - D  S2 (2 songs)
+   Artist: Sunil Balhara
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 6)
+
+   [1/2] Nazar
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 41)
+
+   [2/2] Zindagi
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 42)
+
+   ✅ Album "Group - D  S2" complete!
+
+📀 Album: Mere Yaar Ki Shaadi - Season 2 (5 songs)
+   Artist: Raj Mawar
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 7)
+
+   [1/5] Lalkaar De
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 43)
+
+   [2/5] Saadgi
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 44)
+
+   [3/5] Aye Khuda
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 45)
+
+   [4/5] Aajya Bahu
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 46)
+
+   [5/5] Yaari Ke Ghar
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 47)
+
+   ✅ Album "Mere Yaar Ki Shaadi - Season 2" complete!
+
+📀 Album: Safe House (3 songs)
+   Artist: 
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 8)
+
+   [1/3] Desi Banda
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 48)
+
+   [2/3] Tu Itna Pyara Kyu Se
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 49)
+
+   [3/3] Dada Desh Jaanda Pardesh
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 50)
+
+   ✅ Album "Safe House" complete!
+
+📀 Album: Prem Nagar (5 songs)
+   Artist: Ankit Shrivastava
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 9)
+
+   [1/5] Ishq Hua
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 51)
+
+   [2/5] Hogya Barvi Fail
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 52)
+
+   [3/5] Jaan Kadegi
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 53)
+
+   [4/5] Khulle Milange
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 54)
+
+   [5/5] Bantwara
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 55)
+
+   ✅ Album "Prem Nagar" complete!
+
+📀 Album: Mewat (2 songs)
+   Artist: Dipon Das
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 10)
+
+   [1/2] Title Track
+      ❌ Error: Audio not found: Song25.wav
+
+   [1/2] Chamak Tera Dantan mh
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 56)
+
+   ✅ Album "Mewat" complete!
+
+📀 Album: Bhai Chara (2 songs)
+   Artist: Mukesh Varma
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 11)
+
+   [1/2] Title Track
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 57)
+
+   [2/2] Banni
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 58)
+
+   ✅ Album "Bhai Chara" complete!
+
+📀 Album: Punarjanam (3 songs)
+   Artist: 
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 12)
+
+   [1/3] Namah Shivaya
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 59)
+
+   [2/3] Jamura
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 60)
+
+   [3/3] Jamura Slow
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 61)
+
+   ✅ Album "Punarjanam" complete!
+
+📀 Album: Bad Boys Bhiwani (BBB) (6 songs)
+   Artist: 
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 13)
+
+   [1/6] Aata Bheed mh Rap
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 62)
+
+   [2/6] Bhiyaani Shahar
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 63)
+
+   [3/6] Maan Jaagi
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 64)
+
+   [4/6] 
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 65)
+
+   [5/6] Tu Raaja Ki Raj Dulari Folk
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 66)
+
+   [6/6] BBB Title Track
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 67)
+
+   ✅ Album "Bad Boys Bhiwani (BBB)" complete!
+
+📀 Album: Zidd (Bakhat) (2 songs)
+   Artist: "RSR
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 14)
+
+   [1/2] Maamla Ishq
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 68)
+
+   [2/2] Taqdeer
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 69)
+
+   ✅ Album "Zidd (Bakhat)" complete!
+
+📀 Album: 1600 Meter (2 songs)
+   Artist: Masoom sharma
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 15)
+
+   [1/2] Kheench de meter
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 70)
+
+   [2/2] Sajana
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 71)
+
+   ✅ Album "1600 Meter" complete!
+
+📀 Album: Bin Tere Bechaiin (5 songs)
+   Artist: Sachin Arora
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 16)
+
+   [1/5] Bin Tere Bechaiin Title Track / बिन तेरे बेचैन
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 72)
+
+   [2/5] Pahle Pahle Pyar Ka / पहले पहले प्यार का
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 73)
+
+   [3/5] Nanad Sai Katari / नणद सै कटारी
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 74)
+
+   [4/5] Facebook / फेसबुक
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 75)
+
+   [5/5] Kalje mh / काळजे म्ह
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 76)
+
+   ✅ Album "Bin Tere Bechaiin" complete!
+
+📀 Album: Bahu Faraar (3 songs)
+   Artist: Rajesh Singhpuria
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 17)
+
+   [1/3] Bahu Bihar Tai/बहु बिहार तै
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 77)
+
+   [2/3] Faddu kyun Bnagi/फद्दू क्यूँ बणागी
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 78)
+
+   [3/3] Teri Surat/तेरी सूरत
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 79)
+
+   ✅ Album "Bahu Faraar" complete!
+
+📀 Album: Desi (6 songs)
+   Artist: Amit Dhull
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 18)
+
+   [1/6] Meharbani
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 80)
+
+   [2/6] Thanedaar
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 81)
+
+   [3/6] Desi Daaru
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 82)
+
+   [4/6] Desi Intro Music
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 83)
+
+   [5/6] Bunty Intro Music
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 84)
+
+   [6/6] Rajesh Intro Music
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 85)
+
+   ✅ Album "Desi" complete!
+
+📀 Album: Rohtak Kabza (3 songs)
+   Artist: Masoom Sharma
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 19)
+
+   [1/3] Rohtak Kabza Title Track
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 86)
+
+   [2/3] Kaala Tikka
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 87)
+
+   [3/3] Gori Rai
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 88)
+
+   ✅ Album "Rohtak Kabza" complete!
+
+📀 Album: Rangeelee (3 songs)
+   Artist: Sundeep Sharma
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 20)
+
+   [1/3] Jisi Bhi Sai Zindagi
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 89)
+
+   [2/3] Baba Ji Manai Bahu Duade/बाबा जी मन्नै बहू दुआदे
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 90)
+
+   [3/3] Babu O Babu
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 91)
+
+   ✅ Album "Rangeelee" complete!
+
+📀 Album: Hukum Ka Ikka (3 songs)
+   Artist: Yogi Siddharth
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 21)
+
+   [1/3] Rann Ko Jeetna Hoga
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 92)
+
+   [2/3] Tu Chahiye
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 93)
+
+   [3/3] Ya Kaisi Vipda
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 94)
+
+   ✅ Album "Hukum Ka Ikka" complete!
+
+📀 Album: Totta (2 songs)
+   Artist: Akash Chawaria
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 22)
+
+   [1/2] Totta Title Track
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 95)
+
+   [2/2] Kabhi Milte Hain
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 96)
+
+   ✅ Album "Totta" complete!
+
+📀 Album: Mahapunarjanam (9 songs)
+   Artist: "Somvir Kathurwal
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 23)
+
+   [1/9] Mahapunarjanam Title Track
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 97)
+
+   [2/9] Tere Tai Pyar UK
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 98)
+
+   [3/9] Tere Tai Pyar Somvir
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 99)
+
+   [4/9] Tere Tai Pyar Kid
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 100)
+
+   [5/9] Tere Tai Pyar UK & Ramkesh
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 101)
+
+   [6/9] Tu Pyar hai UK
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 102)
+
+   [7/9] Tu Meri Radha
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 103)
+
+   [8/9] Achar Sahinta
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 104)
+
+   [9/9] Gud Baatan Aayi
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 105)
+
+   ✅ Album "Mahapunarjanam" complete!
+
+📀 Album: Dhai Din (5 songs)
+   Artist: Veenu Gaur
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 24)
+
+   [1/5] Chhathi/छठी
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 106)
+
+   [2/5] Baat Dekhu Su/बाट देखूं सूं
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 107)
+
+   [3/5] Baddua/बद्दुआ
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 108)
+
+   [4/5] Yaa Ghari Ruk Ske Sai Ke/ या घड़ी रुक सकै सै के
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 109)
+
+   [5/5] Ya Kaisi Holi Aayi/ या कैसी होली आई
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 110)
+
+   ✅ Album "Dhai Din" complete!
+
+📀 Album: Haare Ka Sahara (2 songs)
+   Artist: -
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 25)
+
+   [1/2] Shyam Aaye Mere Ghar - Sad Version
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 111)
+
+   [2/2] Shyam Aaye Mere Ghar
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 112)
+
+   ✅ Album "Haare Ka Sahara" complete!
+
+📀 Album: Videshi Bahu 2 (1 songs)
+   Artist: Rajesh Singhpuria
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 26)
+
+   [1/1] Do Lugai
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 113)
+
+   ✅ Album "Videshi Bahu 2" complete!
+
+📀 Album: ChidiBaaz (1 songs)
+   Artist: Raj Mawar
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 27)
+
+   [1/1] Mohabbatan Ke Ghar
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 114)
+
+   ✅ Album "ChidiBaaz" complete!
+
+📀 Album: Chidibaaz (2 songs)
+   Artist: Pulqit
+   📤 Uploading album cover...
+   ✅ Album cover uploaded
+   📝 Creating album...
+   ✅ Album created (ID: 28)
+
+   [1/2] Roye Jaun
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 115)
+
+   [2/2] Dheere Dheere Pyar Tere tai
+      📤 Uploading...
+      ✅ Uploaded
+      💾 Song saved (ID: 116)
+
+   ✅ Album "Chidibaaz" complete!
+
+======================================================================
+📊 Final Summary:
+======================================================================
+✅ Total Success: 94 songs
+   🎵 Single Songs: 14
+   📀 Album Songs: 80 (25 albums)
+❌ Failed: 2 songs
+⏱️  Time taken: 567.9s
+======================================================================
+
+❌ Failed Songs:
+   1. Boojha - Ravinder RSR
+      Error: Audio not found: Song72.wav
+   2. [Album: Mewat] Title Track
+      Error: Audio not found: Song25.wav
+
+💾 Failed songs saved to: failed-songs.json
+
+✅ Bulk upload complete!
+

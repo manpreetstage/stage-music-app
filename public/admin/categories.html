@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Categories - Stage Music Admin</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        .category-manage-section {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .category-list {
+            flex: 1;
+            background: var(--bg-elevated);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-item:hover, .category-item.active {
+            background: var(--stage-red);
+            transform: translateX(5px);
+        }
+
+        .category-item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .category-item-icon {
+            font-size: 2em;
+        }
+
+        .song-management {
+            flex: 2;
+            background: var(--bg-elevated);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .songs-in-category {
+            margin-bottom: 30px;
+        }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .song-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .song-item-cover {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .add-song-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid var(--bg-primary);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-primary);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--stage-red);
+        }
+
+        .available-songs {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .add-song-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-song-item:hover {
+            background: rgba(227, 30, 36, 0.2);
+        }
+
+        .add-btn {
+            background: var(--stage-red);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .add-btn:hover {
+            background: #c41e23;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <nav class="admin-nav">
+            <div class="admin-logo">
+                <a href="/admin/">🎵 Stage Music Admin</a>
+            </div>
+            <div class="admin-nav-links">
+                <a href="/admin/">Dashboard</a>
+                <a href="/admin/top10.html">Top 10</a>
+                <a href="/admin/categories.html" class="active">Categories</a>
+                <a href="/">← Back to Site</a>
+            </div>
+        </nav>
+
+        <div class="admin-content">
+            <div class="admin-header">
+                <h1>📂 Manage Categories</h1>
+                <p>Add or remove songs from category playlists</p>
+            </div>
+
+            <div class="category-manage-section">
+                <!-- Categories List -->
+                <div class="category-list">
+                    <h3>Categories</h3>
+                    <div id="categories-list"></div>
+                </div>
+
+                <!-- Song Management -->
+                <div class="song-management" id="song-management-panel" style="display: none;">
+                    <h3 id="selected-category-title">Select a category</h3>
+
+                    <!-- Current Songs -->
+                    <div class="songs-in-category">
+                        <h4>Songs in this category (<span id="songs-count">0</span>)</h4>
+                        <div id="current-songs"></div>
+                    </div>
+
+                    <!-- Add Songs -->
+                    <div class="add-song-section">
+                        <h4>Add Songs</h4>
+                        <input type="text" class="search-box" id="search-songs" placeholder="Search songs to add...">
+                        <div class="available-songs" id="available-songs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCategory = null;
+        let allSongs = [];
+
+        // Load categories
+        async function loadCategories() {
+            const response = await fetch('/api/categories');
+            const data = await response.json();
+
+            const list = document.getElementById('categories-list');
+            list.innerHTML = data.categories.map(cat => `
+                <div class="category-item" onclick="selectCategory(${cat.id}, '${cat.name}', '${cat.icon}')">
+                    <div class="category-item-info">
+                        <div class="category-icon icon-${cat.icon}" style="width:50px;height:50px;font-size:1.5em;"></div>
+                        <div>
+                            <div style="font-weight: 600;">${cat.name}</div>
+                            <div style="font-size: 0.9em; color: var(--text-secondary);">${cat.description}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Select category
+        async function selectCategory(id, name, icon) {
+            currentCategory = id;
+
+            // Highlight selected
+            document.querySelectorAll('.category-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.category-item').classList.add('active');
+
+            // Show management panel
+            document.getElementById('song-management-panel').style.display = 'block';
+            document.getElementById('selected-category-title').innerHTML = `<div class="category-icon icon-${icon}" style="width:40px;height:40px;font-size:1.2em;display:inline-flex;vertical-align:middle;margin-right:10px;"></div>${name}`;
+
+            // Load songs in this category
+            await loadCategorySongs(id);
+            await loadAllSongs();
+        }
+
+        // Load songs in category
+        async function loadCategorySongs(categoryId) {
+            const response = await fetch(`/api/categories/${categoryId}/songs`);
+            const data = await response.json();
+
+            document.getElementById('songs-count').textContent = data.songs.length;
+
+            const container = document.getElementById('current-songs');
+            if (data.songs.length === 0) {
+                container.innerHTML = '<div class="empty-state">No songs added yet</div>';
+            } else {
+                container.innerHTML = data.songs.map(song => `
+                    <div class="song-item">
+                        <div class="song-item-info">
+                            <img src="${song.cover_image}" class="song-item-cover">
+                            <div>
+                                <div style="font-weight: 600;">${song.title}</div>
+                                <div style="font-size: 0.9em; color: var(--text-secondary);">${song.singer || 'Unknown'}</div>
+                            </div>
+                        </div>
+                        <button class="remove-btn" onclick="removeSong(${categoryId}, ${song.id})">Remove</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Load all songs
+        async function loadAllSongs() {
+            if (allSongs.length === 0) {
+                const response = await fetch('/api/songs');
+                const data = await response.json();
+                allSongs = data.songs || [];
+            }
+            displayAvailableSongs(allSongs);
+        }
+
+        // Display available songs
+        function displayAvailableSongs(songs) {
+            const container = document.getElementById('available-songs');
+            container.innerHTML = songs.map(song => `
+                <div class="add-song-item">
+                    <div class="song-item-info">
+                        <img src="${song.cover_image}" class="song-item-cover">
+                        <div>
+                            <div style="font-weight: 600;">${song.title}</div>
+                            <div style="font-size: 0.9em; color: var(--text-secondary);">${song.singer || 'Unknown'}</div>
+                        </div>
+                    </div>
+                    <button class="add-btn" onclick="addSong(${currentCategory}, ${song.id})">Add</button>
+                </div>
+            `).join('');
+        }
+
+        // Search songs
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('search-songs').addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = allSongs.filter(song =>
+                    song.title.toLowerCase().includes(query) ||
+                    (song.singer && song.singer.toLowerCase().includes(query))
+                );
+                displayAvailableSongs(filtered);
+            });
+        });
+
+        // Add song to category
+        async function addSong(categoryId, songId) {
+            try {
+                const response = await fetch(`/api/categories/${categoryId}/songs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ song_id: songId })
+                });
+
+                if (response.ok) {
+                    await loadCategorySongs(categoryId);
+                    alert('Song added successfully!');
+                }
+            } catch (error) {
+                alert('Error adding song: ' + error.message);
+            }
+        }
+
+        // Remove song from category
+        async function removeSong(categoryId, songId) {
+            if (!confirm('Remove this song from category?')) return;
+
+            try {
+                const response = await fetch(`/api/categories/${categoryId}/songs/${songId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    await loadCategorySongs(categoryId);
+                    alert('Song removed successfully!');
+                }
+            } catch (error) {
+                alert('Error removing song: ' + error.message);
+            }
+        }
+
+        // Load on page load
+        loadCategories();
+    </script>
+</body>
+</html>

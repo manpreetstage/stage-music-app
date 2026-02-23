@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Top 10 - Stage Music Admin</title>
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #e31e24;
+        }
+
+        .page-subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .featured-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .featured-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .featured-rank {
+            width: 40px;
+            height: 40px;
+            background: #e31e24;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .featured-cover {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .featured-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .featured-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .featured-artist {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .remove-btn {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .songs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .song-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .song-item:hover {
+            background: #e9ecef;
+            border-color: #e31e24;
+            transform: translateY(-2px);
+        }
+
+        .song-item.selected {
+            border-color: #e31e24;
+            background: #ffe5e6;
+        }
+
+        .song-cover {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-bottom: 8px;
+        }
+
+        .song-name {
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .song-artist {
+            font-size: 0.8em;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .add-btn {
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+
+        .add-btn:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .add-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-box strong {
+            color: #e31e24;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #e31e24;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <nav class="admin-nav">
+            <h1>🎵 Stage Music Admin</h1>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="index.html">Upload Song</a>
+                <a href="top10.html" class="active">Top 10</a>
+                <a href="/">Back to Player</a>
+            </div>
+        </nav>
+
+        <main class="admin-content">
+            <div class="page-header">
+                <h1 class="page-title">🔥 Manage Top 10 Trending</h1>
+                <p class="page-subtitle">Customize featured songs or let the system auto-select based on plays</p>
+            </div>
+
+            <div class="info-box">
+                <strong>How it works:</strong> You can manually feature up to 10 songs. Any remaining slots will be automatically filled with the most played songs. Featured songs appear with a ⭐ star badge.
+            </div>
+
+            <!-- Current Featured Songs -->
+            <div class="section">
+                <h2 class="section-title">📌 Currently Featured Songs (<span id="featured-count">0</span>/10)</h2>
+                <div class="featured-list" id="featured-list">
+                    <p style="color: #888;">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Add New Featured Song -->
+            <div class="section">
+                <h2 class="section-title">➕ Add Song to Featured</h2>
+                <input type="text" class="search-box" id="search-box" placeholder="Search songs...">
+                <div class="songs-grid" id="songs-grid">
+                    <p style="color: #888;">Loading songs...</p>
+                </div>
+                <button class="add-btn" id="add-btn" disabled>Add Selected Song</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let allSongs = [];
+        let featuredSongs = [];
+        let selectedSongId = null;
+
+        // Load featured songs
+        async function loadFeatured() {
+            try {
+                const response = await fetch('/api/featured-songs');
+                const data = await response.json();
+                featuredSongs = data.songs || [];
+
+                document.getElementById('featured-count').textContent = featuredSongs.length;
+
+                const featuredList = document.getElementById('featured-list');
+
+                if (featuredSongs.length === 0) {
+                    featuredList.innerHTML = '<p style="color: #888;">No featured songs yet. Songs will be auto-selected based on play count.</p>';
+                    return;
+                }
+
+                featuredList.innerHTML = featuredSongs.map((song, index) => `
+                    <div class="featured-item">
+                        <div class="featured-rank">${index + 1}</div>
+                        <img src="${song.cover_image || '/assets/default-cover.jpg'}"
+                             class="featured-cover"
+                             onerror="this.src='/assets/default-cover.jpg'">
+                        <div class="featured-info">
+                            <div class="featured-title">${song.title}</div>
+                            <div class="featured-artist">${song.artist || song.singer || 'Unknown'}</div>
+                        </div>
+                        <button class="remove-btn" onclick="removeFeatured(${song.id})">Remove</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading featured:', error);
+            }
+        }
+
+        // Load all songs
+        async function loadSongs() {
+            try {
+                const response = await fetch('/api/songs');
+                const data = await response.json();
+                allSongs = data.songs || [];
+                displaySongs(allSongs);
+            } catch (error) {
+                console.error('Error loading songs:', error);
+            }
+        }
+
+        // Display songs
+        function displaySongs(songs) {
+            const songsGrid = document.getElementById('songs-grid');
+
+            if (songs.length === 0) {
+                songsGrid.innerHTML = '<p style="color: #888;">No songs found</p>';
+                return;
+            }
+
+            songsGrid.innerHTML = songs.map(song => `
+                <div class="song-item ${selectedSongId === song.id ? 'selected' : ''}"
+                     onclick="selectSong(${song.id})">
+                    <img src="${song.cover_image || '/assets/default-cover.jpg'}"
+                         class="song-cover"
+                         onerror="this.src='/assets/default-cover.jpg'">
+                    <div class="song-name">${song.title}</div>
+                    <div class="song-artist">${song.artist || song.singer || 'Unknown'}</div>
+                </div>
+            `).join('');
+        }
+
+        // Select song
+        function selectSong(songId) {
+            selectedSongId = songId;
+            document.querySelectorAll('.song-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.song-item').classList.add('selected');
+            document.getElementById('add-btn').disabled = false;
+        }
+
+        // Add to featured
+        async function addFeatured() {
+            if (!selectedSongId) return;
+
+            if (featuredSongs.length >= 10) {
+                alert('Maximum 10 featured songs allowed!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/featured-songs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        song_id: selectedSongId,
+                        position: featuredSongs.length + 1
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Song added to featured!');
+                    selectedSongId = null;
+                    document.getElementById('add-btn').disabled = true;
+                    await loadFeatured();
+                } else {
+                    alert('Failed to add song');
+                }
+            } catch (error) {
+                console.error('Error adding featured:', error);
+                alert('Error adding song');
+            }
+        }
+
+        // Remove from featured
+        async function removeFeatured(songId) {
+            if (!confirm('Remove this song from featured?')) return;
+
+            try {
+                const response = await fetch(`/api/featured-songs/${songId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    await loadFeatured();
+                } else {
+                    alert('Failed to remove song');
+                }
+            } catch (error) {
+                console.error('Error removing featured:', error);
+                alert('Error removing song');
+            }
+        }
+
+        // Search songs
+        document.getElementById('search-box').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query) {
+                const filtered = allSongs.filter(song =>
+                    song.title.toLowerCase().includes(query) ||
+                    (song.artist && song.artist.toLowerCase().includes(query)) ||
+                    (song.singer && song.singer.toLowerCase().includes(query))
+                );
+                displaySongs(filtered);
+            } else {
+                displaySongs(allSongs);
+            }
+        });
+
+        // Add button click
+        document.getElementById('add-btn').addEventListener('click', addFeatured);
+
+        // Initialize
+        loadFeatured();
+        loadSongs();
+    </script>
+</body>
+</html>

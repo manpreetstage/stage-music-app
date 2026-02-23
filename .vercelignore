@@ -1,0 +1,7 @@
+# Vercel ignore
+node_modules
+npm-debug.log
+.DS_Store
+
+# Keep these for deployment
+# stage_music.db

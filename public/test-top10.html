@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Top 10 Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #1a1a1a; color: white; }
+        .song { background: #2a2a2a; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .rank { background: #e31e24; color: white; padding: 5px 15px; border-radius: 20px; 
+                display: inline-block; font-weight: bold; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Top 10 API Test</h1>
+    <div id="output">Loading...</div>
+    <script>
+        fetch('/api/top10')
+            .then(r => r.json())
+            .then(data => {
+                console.log('Top 10 Data:', data);
+                const html = data.songs.map((song, i) => `
+                    <div class="song">
+                        <span class="rank">#${i+1}</span>
+                        <strong>${song.title}</strong> - ${song.singer || 'Unknown'}
+                        <br><small>Plays: ${song.play_count} | ${song.language}</small>
+                    </div>
+                `).join('');
+                document.getElementById('output').innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('output').innerHTML = 'Error: ' + err;
+            });
+    </script>
+</body>
+</html>

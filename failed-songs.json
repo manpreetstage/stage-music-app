@@ -1,0 +1,47 @@
+[
+  {
+    "title": "Hoonkar - Bhairvi",
+    "singer": "",
+    "error": "Audio not found: Song1.mp3"
+  },
+  {
+    "title": "Choti si Umar - Muklavo",
+    "singer": "",
+    "error": "Audio not found: Song19.mp3"
+  },
+  {
+    "album": "Chimpudo",
+    "title": "mhari gordi",
+    "error": "Audio not found: Song07.mp3"
+  },
+  {
+    "album": "Minzar",
+    "title": "Naina Su Nain",
+    "error": "Audio not found: Song16.mp3"
+  },
+  {
+    "album": "Preet Binjara",
+    "title": "PILA du tuje",
+    "error": "Audio not found: Song24.mp3"
+  },
+  {
+    "album": "Preet Binjara",
+    "title": "PINA JITNA PEE LE",
+    "error": "Audio not found: Song25.mp3"
+  },
+  {
+    "album": "Preet Binjara",
+    "title": "piya mere  kesariya",
+    "error": "Audio not found: Song26.mp3"
+  },
+  {
+    "album": "Qissa",
+    "title": "QISAA",
+    "error": "Audio not found: Song27.mp3"
+  },
+  {
+    "album": "Qissa",
+    "title": "TANANK DJ BAJAN DO",
+    "error": "Audio not found: Song28.mp3"
+  }
+]

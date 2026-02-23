@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Stage Music</title>
+    <link rel="icon" type="image/png" href="/assets/stage-logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Background Animation -->
+        <div class="bg-animation">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+
+        <!-- Auth Box -->
+        <div class="auth-box">
+            <!-- Logo -->
+            <div class="auth-logo">
+                <div class="logo-icon"></div>
+                <h1>STAGE <span>Music</span></h1>
+            </div>
+
+            <h2 class="auth-title">Welcome Back!</h2>
+            <p class="auth-subtitle">Login to continue to Stage Music</p>
+
+            <!-- Alert Messages -->
+            <div id="error-message" class="alert alert-error" style="display: none;"></div>
+            <div id="success-message" class="alert alert-success" style="display: none;"></div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">
+                        <span class="label-icon">👤</span>
+                        Username or Email
+                    </label>
+                    <input type="text" id="username" name="username" required placeholder="Enter your username or email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        <span class="label-icon">🔒</span>
+                        Password
+                    </label>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="link-text">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-primary" id="login-btn">
+                    <span class="btn-text">Login</span>
+                    <span class="btn-loader" style="display: none;">⏳</span>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <!-- Register Link -->
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register.html" class="link-primary">Register now</a></p>
+            </div>
+
+            <!-- Home Link -->
+            <div class="auth-footer" style="margin-top: 20px;">
+                <a href="/" class="link-text">← Back to Homepage</a>
+            </div>
+
+            <!-- Admin Hint -->
+            <div class="admin-hint">
+                <p>🔑 Admin? Login with your admin credentials</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - Stage Music</title>
+    <link rel="icon" type="image/png" href="/assets/stage-logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="/assets/stage-logo.png" alt="Stage Logo" class="logo-img">
+                    <span class="logo-text">STAGE <span class="logo-accent">Music</span></span>
+                </div>
+                <div class="header-right">
+                    <span class="welcome-text">Welcome, <span id="user-name">User</span>!</span>
+                    <button id="logout-btn" class="btn-logout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Container -->
+    <div class="dashboard-container">
+        <div class="container">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1>🎤 Creator Profile</h1>
+                <p class="subtitle">Manage your music and grow your presence on Stage Music</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="/admin" class="action-card">
+                    <div class="action-icon">🎵</div>
+                    <h3>Upload Song</h3>
+                    <p>Upload your music to Stage Music</p>
+                </a>
+
+                <a href="/youtube-import.html" class="action-card">
+                    <div class="action-icon">📥</div>
+                    <h3>YouTube Import</h3>
+                    <p>Import songs from YouTube channels</p>
+                </a>
+
+                <a href="/" class="action-card">
+                    <div class="action-icon">🎧</div>
+                    <h3>Music Player</h3>
+                    <p>Listen to all available songs</p>
+                </a>
+            </div>
+
+            <!-- My Songs Section -->
+            <div class="my-songs-section">
+                <div class="section-header">
+                    <h2>My Songs</h2>
+                    <button id="refresh-songs" class="btn-refresh">🔄 Refresh</button>
+                </div>
+
+                <div id="loading" class="loading-spinner" style="display: none;">
+                    Loading your songs...
+                </div>
+
+                <div id="songs-container" class="songs-grid">
+                    <!-- Songs will be loaded here -->
+                </div>
+
+                <div id="no-songs" class="no-songs" style="display: none;">
+                    <div class="no-songs-icon">🎵</div>
+                    <h3>No Songs Yet</h3>
+                    <p>Start by uploading your first song!</p>
+                    <a href="/admin.html" class="btn-primary">Upload Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Song Modal -->
+    <div class="modal" id="edit-modal" style="display:none;">
+        <div class="modal-overlay" onclick="closeEditModal()"></div>
+        <div class="modal-content edit-modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Song</h2>
+                <button class="modal-close" onclick="closeEditModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="edit-error" class="alert alert-error" style="display:none;"></div>
+                <div id="edit-success" class="alert alert-success" style="display:none;"></div>
+
+                <form id="edit-form" class="edit-form">
+                    <input type="hidden" id="edit-song-id">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-title">Song Title *</label>
+                            <input type="text" id="edit-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-artist">Artist/Singer *</label>
+                            <input type="text" id="edit-artist" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-language">Language *</label>
+                            <select id="edit-language" required>
+                                <option value="">Select Language</option>
+                                <option value="Haryanvi">Haryanvi</option>
+                                <option value="Rajasthani">Rajasthani</option>
+                                <option value="Gujarati">Gujarati</option>
+                                <option value="Bhojpuri">Bhojpuri</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="Punjabi">Punjabi</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-company">Company</label>
+                            <input type="text" id="edit-company">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-music-director">Music Director</label>
+                            <input type="text" id="edit-music-director">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-composer">Composer</label>
+                            <input type="text" id="edit-composer">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-lyrics">Lyrics</label>
+                        <textarea id="edit-lyrics" rows="4" placeholder="Enter song lyrics (optional)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Current Cover Image</label>
+                        <div class="current-cover">
+                            <img id="current-cover-img" src="" alt="Current Cover" style="max-width: 200px; border-radius: 8px;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-cover">Change Cover Image (Optional)</label>
+                        <input type="file" id="edit-cover" accept="image/*">
+                        <small style="color: #888;">Upload a new cover image to replace the current one</small>
+                    </div>
+
+                    <button type="submit" class="btn-modal-primary" id="edit-submit-btn">
+                        <span class="btn-text">Save Changes</span>
+                        <span class="btn-loader" style="display:none;">⏳</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

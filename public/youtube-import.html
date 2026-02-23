@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Import - Stage Music</title>
+    <link rel="icon" type="image/png" href="/assets/stage-logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="youtube-import.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="/assets/stage-logo.png" alt="Stage Logo" class="logo-img">
+                    <span class="logo-text">STAGE <span class="logo-accent">Music</span></span>
+                </div>
+                <div class="header-right">
+                    <a href="/dashboard.html" class="nav-link">Dashboard</a>
+                    <a href="/admin.html" class="nav-link">Upload</a>
+                    <a href="/" class="nav-link">Player</a>
+                    <button id="logout-btn" class="btn-logout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="youtube-container">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1>YouTube Import</h1>
+                <p class="subtitle">Import songs from YouTube channels to Stage Music</p>
+            </div>
+
+            <!-- Import Form -->
+            <div class="import-box">
+                <div class="import-icon">📥</div>
+                <h2>Import from YouTube</h2>
+                <p class="import-description">Enter a YouTube video URL to import it as a song</p>
+
+                <form id="youtube-form" class="youtube-form">
+                    <div class="form-group">
+                        <label for="youtube-url">
+                            <span class="label-icon">🔗</span>
+                            YouTube Video URL
+                        </label>
+                        <input
+                            type="url"
+                            id="youtube-url"
+                            name="youtube-url"
+                            required
+                            placeholder="https://www.youtube.com/watch?v=..."
+                        >
+                        <small class="help-text">Paste the full YouTube video URL</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="youtube-language">
+                            <span class="label-icon">🌍</span>
+                            Language
+                        </label>
+                        <select id="youtube-language" name="youtube-language">
+                            <option value="Auto">Auto-detect</option>
+                            <option value="Haryanvi">Haryanvi</option>
+                            <option value="Rajasthani">Rajasthani</option>
+                            <option value="Gujarati">Gujarati</option>
+                            <option value="Bhojpuri">Bhojpuri</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Punjabi">Punjabi</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-import" id="import-btn">
+                        <span class="btn-text">Import from YouTube</span>
+                        <span class="btn-icon">📥</span>
+                    </button>
+                </form>
+
+                <!-- Progress Section -->
+                <div id="import-progress" class="import-progress" style="display: none;">
+                    <div class="progress-animation">
+                        <div class="spinner"></div>
+                        <p id="import-status">Fetching video information...</p>
+                    </div>
+                </div>
+
+                <!-- Success Message -->
+                <div id="import-success" class="import-success" style="display: none;">
+                    <div class="success-icon">✅</div>
+                    <h3>Import Successful!</h3>
+                    <p id="success-message">Song imported successfully!</p>
+                    <button class="btn-reset" onclick="resetImportForm()">Import Another</button>
+                </div>
+            </div>
+
+            <!-- Quick Links Section -->
+            <div class="quick-links">
+                <h3>Official Stage Music Channels</h3>
+                <p class="quick-links-subtitle">Import songs directly from our official YouTube channels</p>
+
+                <div class="channels-grid">
+                    <a href="https://www.youtube.com/@STAGEHARYANVI/videos" target="_blank" class="channel-card">
+                        <div class="channel-icon">🎵</div>
+                        <div class="channel-info">
+                            <h4>Stage Haryanvi</h4>
+                            <p>Haryanvi Music Channel</p>
+                        </div>
+                    </a>
+
+                    <a href="https://www.youtube.com/@StageRajasthani/videos" target="_blank" class="channel-card">
+                        <div class="channel-icon">🎶</div>
+                        <div class="channel-info">
+                            <h4>Stage Rajasthani</h4>
+                            <p>Rajasthani Music Channel</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="instructions-box">
+                <h3>How to Import</h3>
+                <ol class="instructions-list">
+                    <li>
+                        <strong>Copy YouTube URL:</strong>
+                        Visit one of our official channels above and copy the video URL
+                    </li>
+                    <li>
+                        <strong>Paste URL:</strong>
+                        Paste the URL in the form above
+                    </li>
+                    <li>
+                        <strong>Select Language:</strong>
+                        Choose the appropriate language or use auto-detect
+                    </li>
+                    <li>
+                        <strong>Import:</strong>
+                        Click the import button and wait for the process to complete
+                    </li>
+                    <li>
+                        <strong>Done:</strong>
+                        The song will be available in the music player automatically
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="youtube-import.js"></script>
+</body>
+</html>

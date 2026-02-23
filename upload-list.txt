@@ -1,0 +1,30 @@
+Essential Files to Upload to GitHub:
+=====================================
+
+1. package.json
+2. package-lock.json
+3. server.js
+4. vercel.json
+5. railway.json
+6. Procfile
+7. .gitignore
+8. stage_music.db
+
+Essential Folders:
+==================
+
+9. public/ (complete folder)
+
+Location: /Users/manpreetsingh/Thinking/stage-music-app
+
+DON'T Upload:
+=============
+- node_modules/
+- uploads/
+- bulk-songs/
+- bulk-covers/
+- Haryanvi1/
+- RJ1/
+- Data/
+
+Total Size: ~15 MB (without node_modules)
