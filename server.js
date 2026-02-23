@@ -1435,25 +1435,22 @@ app.post('/api/import-youtube', async (req, res) => {
 });
 
 // Export for Vercel or start server for local
-module.exports = app;
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`
+╔═══════════════════════════════════════════════╗
+║                                               ║
+║       🎵  STAGE MUSIC PLATFORM  🎵           ║
+║                                               ║
+║   Server running on PORT: ${PORT}                ║
+║                                               ║
+║   Environment: ${process.env.NODE_ENV || 'development'}              ║
+║                                               ║
+╚═══════════════════════════════════════════════╝
+    `);
+});
 
-// Start server only in non-serverless environment
-if (require.main === module || !process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`
-    ╔═══════════════════════════════════════════════╗
-    ║                                               ║
-    ║       🎵  STAGE MUSIC PLATFORM  🎵           ║
-    ║                                               ║
-    ║   Server running on: http://localhost:${PORT}   ║
-    ║                                               ║
-    ║   Music Player: http://localhost:${PORT}/          ║
-    ║   Admin Panel:  http://localhost:${PORT}/admin     ║
-    ║                                               ║
-    ╚═══════════════════════════════════════════════╝
-        `);
-    });
-}
+module.exports = app;
 
 // Graceful shutdown
 process.on('SIGINT', () => {
