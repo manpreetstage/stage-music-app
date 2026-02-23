@@ -86,7 +86,7 @@ function renderQuickPicks() {
 function renderTop10() {
     const top3List = document.getElementById('top3-list');
     const trendingScroll = document.getElementById('trending-scroll');
-    const allTrending = allSongs.slice(0, 10);
+    const allTrending = allSongs.slice(0, 9); // Only 9 songs (not 10)
 
     // Top 3 in list mode
     const top3 = allTrending.slice(0, 3);
@@ -106,8 +106,8 @@ function renderTop10() {
         </div>
     `).join('');
 
-    // 4-9 in horizontal scroll
-    const trending4to9 = allTrending.slice(3, 10);
+    // 4-9 in horizontal scroll (6 songs)
+    const trending4to9 = allTrending.slice(3, 9);
     trendingScroll.innerHTML = trending4to9.map(song => `
         <div class="song-card" onclick="playSong(${song.id})">
             <img src="${song.cover_image}" alt="${song.title}" class="card-cover">
@@ -168,16 +168,15 @@ async function renderAlbums() {
     try {
         const response = await fetch('/api/albums');
         const data = await response.json();
-        const grid = document.getElementById('albums-grid');
+        const scroll = document.getElementById('albums-scroll');
 
         if (data.albums && data.albums.length > 0) {
-            grid.innerHTML = data.albums.slice(0, 6).map(album => `
-                <div class="album-card" onclick="playAlbum(${album.id}, '${album.name}')">
-                    <img src="${album.cover_image || '/assets/default-cover.jpg'}" alt="${album.name}" class="album-cover">
-                    <div class="album-info">
-                        <div class="album-title">${album.name}</div>
-                        <div class="album-artist">${album.singer || 'Various Artists'}</div>
-                        <div class="album-count">${album.song_count || 0} songs</div>
+            scroll.innerHTML = data.albums.map(album => `
+                <div class="song-card" onclick="viewAlbum(${album.id}, '${escapeHtml(album.name)}')">
+                    <img src="${album.cover_image || '/assets/default-cover.jpg'}" alt="${escapeHtml(album.name)}" class="card-cover">
+                    <div class="card-info">
+                        <div class="card-title">${album.name}</div>
+                        <div class="card-subtitle">${album.singer || 'Various Artists'}</div>
                     </div>
                 </div>
             `).join('');
@@ -187,18 +186,24 @@ async function renderAlbums() {
     }
 }
 
-async function playAlbum(albumId, albumName) {
+async function viewAlbum(albumId, albumName) {
     try {
         const response = await fetch(`/api/albums/${albumId}/songs`);
         const data = await response.json();
 
-        if (data.songs && data.songs.length > 0) {
-            // Play first song of album
-            playSong(data.songs[0].id);
-        }
+        // Show all songs in album using category view
+        showCategoryView(albumName, data.songs || []);
     } catch (error) {
-        console.error('Error playing album:', error);
+        console.error('Error loading album:', error);
+        alert('Error loading album. Please try again.');
     }
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function renderUpNext() {
@@ -398,20 +403,33 @@ function switchPage(page) {
 async function viewCategory(categoryIdentifier, categoryName) {
     try {
         let categoryId = categoryIdentifier;
+        let finalCategoryName = categoryName;
 
         // If string (like 'haryanvi'), find the category ID
         if (typeof categoryIdentifier === 'string') {
             const response = await fetch('/api/categories');
             const data = await response.json();
-            const category = data.categories.find(c =>
-                c.icon === categoryIdentifier ||
-                c.name.toLowerCase().includes(categoryIdentifier.toLowerCase())
-            );
+
+            console.log('Looking for category:', categoryIdentifier);
+            console.log('Available categories:', data.categories);
+
+            // Try to find by icon first, then by name
+            let category = data.categories.find(c => c.icon === categoryIdentifier);
+
+            if (!category) {
+                // Try matching by name (case insensitive)
+                category = data.categories.find(c =>
+                    c.name.toLowerCase().includes(categoryIdentifier.toLowerCase())
+                );
+            }
+
             if (category) {
                 categoryId = category.id;
-                categoryName = category.name;
+                finalCategoryName = category.name;
+                console.log('Found category:', category);
             } else {
                 console.log('Category not found:', categoryIdentifier);
+                alert(`Category "${categoryName}" not found. Please add songs to this category first.`);
                 return;
             }
         }
@@ -419,8 +437,10 @@ async function viewCategory(categoryIdentifier, categoryName) {
         const response = await fetch(`/api/categories/${categoryId}/songs`);
         const data = await response.json();
 
+        console.log(`Songs in ${finalCategoryName}:`, data.songs);
+
         // Show all songs in category view
-        showCategoryView(categoryName, data.songs || []);
+        showCategoryView(finalCategoryName, data.songs || []);
     } catch (error) {
         console.error('Error loading category:', error);
         alert('Error loading category. Please try again.');
