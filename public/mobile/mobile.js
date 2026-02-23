@@ -84,12 +84,15 @@ function renderQuickPicks() {
 }
 
 function renderTop10() {
-    const list = document.getElementById('top10-list');
-    const top10 = allSongs.slice(0, 10);
+    const top3List = document.getElementById('top3-list');
+    const trendingScroll = document.getElementById('trending-scroll');
+    const allTrending = allSongs.slice(0, 10);
 
-    list.innerHTML = top10.map((song, index) => `
+    // Top 3 in list mode
+    const top3 = allTrending.slice(0, 3);
+    top3List.innerHTML = top3.map((song, index) => `
         <div class="top10-list-item" onclick="playSong(${song.id})">
-            <div class="top10-list-rank ${index < 3 ? 'top3' : ''}">${index + 1}</div>
+            <div class="top10-list-rank top3">${index + 1}</div>
             <img src="${song.cover_image}" alt="${song.title}" class="top10-list-cover">
             <div class="top10-list-info">
                 <div class="top10-list-title">${song.title}</div>
@@ -99,6 +102,18 @@ function renderTop10() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                 </svg>
+            </div>
+        </div>
+    `).join('');
+
+    // 4-9 in horizontal scroll
+    const trending4to9 = allTrending.slice(3, 10);
+    trendingScroll.innerHTML = trending4to9.map(song => `
+        <div class="song-card" onclick="playSong(${song.id})">
+            <img src="${song.cover_image}" alt="${song.title}" class="card-cover">
+            <div class="card-info">
+                <div class="card-title">${song.title}</div>
+                <div class="card-subtitle">${song.singer || 'Unknown'}</div>
             </div>
         </div>
     `).join('');
@@ -311,6 +326,12 @@ function setupEventListeners() {
     nextBtn.addEventListener('click', playNext);
     prevBtn.addEventListener('click', playPrevious);
 
+    // Category View Back Button
+    const backToHome = document.getElementById('back-to-home');
+    if (backToHome) {
+        backToHome.addEventListener('click', hideCategoryView);
+    }
+
     // Audio Events
     audioPlayer.addEventListener('timeupdate', updateProgress);
     audioPlayer.addEventListener('ended', playNext);
@@ -388,6 +409,7 @@ async function viewCategory(categoryIdentifier, categoryName) {
             );
             if (category) {
                 categoryId = category.id;
+                categoryName = category.name;
             } else {
                 console.log('Category not found:', categoryIdentifier);
                 return;
@@ -397,16 +419,57 @@ async function viewCategory(categoryIdentifier, categoryName) {
         const response = await fetch(`/api/categories/${categoryId}/songs`);
         const data = await response.json();
 
-        // Play first song if available
-        if (data.songs && data.songs.length > 0) {
-            playSong(data.songs[0].id);
-        } else {
-            alert(`No songs in ${categoryName} yet!`);
-        }
+        // Show all songs in category view
+        showCategoryView(categoryName, data.songs || []);
     } catch (error) {
         console.error('Error loading category:', error);
         alert('Error loading category. Please try again.');
     }
+}
+
+function showCategoryView(categoryName, songs) {
+    const categoryView = document.getElementById('category-view');
+    const categoryTitle = document.getElementById('category-view-title');
+    const categoryContent = document.getElementById('category-content');
+
+    categoryTitle.textContent = categoryName;
+
+    if (songs.length === 0) {
+        categoryContent.innerHTML = `
+            <div class="category-empty">
+                <div style="font-size: 48px; margin-bottom: 16px;">🎵</div>
+                <div>No songs in ${categoryName} yet</div>
+            </div>
+        `;
+    } else {
+        categoryContent.innerHTML = `
+            <div class="category-songs-list">
+                ${songs.map(song => `
+                    <div class="category-song-item" onclick="playSong(${song.id})">
+                        <img src="${song.cover_image}" alt="${song.title}" class="category-song-cover">
+                        <div class="category-song-info">
+                            <div class="category-song-title">${song.title}</div>
+                            <div class="category-song-artist">${song.singer || 'Unknown'}</div>
+                        </div>
+                        <div class="category-song-more">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    categoryView.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideCategoryView() {
+    const categoryView = document.getElementById('category-view');
+    categoryView.classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 // ========================================
