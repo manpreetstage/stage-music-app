@@ -136,13 +136,13 @@ body {
 }
 
 /* ========================================
-   QUICK PICKS GRID
+   QUICK PICKS GRID (3x3 = 9 songs)
    ======================================== */
 
 .quick-picks-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-s);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
 }
 
 .quick-pick-card {
@@ -175,17 +175,17 @@ body {
 }
 
 .quick-pick-title {
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .quick-pick-artist {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-secondary);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -642,4 +642,263 @@ body {
         border-radius: 12px;
         text-align: center;
     }
+}
+
+/* ========================================
+   TOP 10 LIST MODE (Small Covers)
+   ======================================== */
+
+.top10-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.top10-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-m);
+    padding: var(--space-s) 0;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.top10-list-item:active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.top10-list-rank {
+    width: 24px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.top10-list-rank.top3 {
+    color: var(--accent-primary);
+}
+
+.top10-list-cover {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-s);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.top10-list-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.top10-list-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top10-list-artist {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top10-list-more {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-round);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+/* ========================================
+   REGIONAL CATEGORIES (4 Big Cards)
+   ======================================== */
+
+.regional-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-m);
+}
+
+.regional-card {
+    aspect-ratio: 1;
+    border-radius: var(--radius-l);
+    padding: var(--space-l);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-tertiary);
+}
+
+.regional-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-elevated) 100%);
+    opacity: 1;
+}
+
+.regional-card:active {
+    transform: scale(0.98);
+}
+
+.regional-card.haryanvi {
+    background: linear-gradient(135deg, #FF6B00 0%, #FFA500 100%);
+}
+
+.regional-card.rajasthani {
+    background: linear-gradient(135deg, #D62828 0%, #F77F00 100%);
+}
+
+.regional-card.bhojpuri {
+    background: linear-gradient(135deg, #38B000 0%, #70E000 100%);
+}
+
+.regional-card.gujarati {
+    background: linear-gradient(135deg, #0077B6 0%, #00B4D8 100%);
+}
+
+.regional-icon {
+    font-size: 48px;
+    margin-bottom: var(--space-s);
+    position: relative;
+    z-index: 1;
+}
+
+.regional-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ========================================
+   ALBUMS SECTION
+   ======================================== */
+
+.albums-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-m);
+}
+
+.album-card {
+    cursor: pointer;
+}
+
+.album-card:active {
+    opacity: 0.8;
+}
+
+.album-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--radius-m);
+    background: var(--bg-tertiary);
+    box-shadow: var(--shadow-card);
+    margin-bottom: var(--space-s);
+    object-fit: cover;
+}
+
+.album-info {
+    padding: 0 var(--space-xs);
+}
+
+.album-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.album-artist {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.album-count {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* ========================================
+   UP NEXT (In Full Player)
+   ======================================== */
+
+.up-next-section {
+    width: 100%;
+    margin-top: var(--space-l);
+    padding: var(--space-l);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-l);
+}
+
+.up-next-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-m);
+}
+
+.up-next-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-m);
+    padding: var(--space-s) 0;
+}
+
+.up-next-cover {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-s);
+    object-fit: cover;
+}
+
+.up-next-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.up-next-song-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.up-next-artist {
+    font-size: 11px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

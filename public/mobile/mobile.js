@@ -55,6 +55,7 @@ async function loadSongs() {
 
         renderQuickPicks();
         renderTop10();
+        renderAlbums();
         renderCategories();
         renderRecentlyPlayed();
     } catch (error) {
@@ -68,7 +69,7 @@ async function loadSongs() {
 
 function renderQuickPicks() {
     const grid = document.getElementById('quick-picks-grid');
-    const picks = allSongs.slice(0, 6); // Top 6 songs
+    const picks = allSongs.slice(0, 9); // Top 9 songs (3x3 grid)
 
     grid.innerHTML = picks.map((song, index) => `
         <div class="quick-pick-card" onclick="playSong(${song.id})">
@@ -83,15 +84,21 @@ function renderQuickPicks() {
 }
 
 function renderTop10() {
-    const scroll = document.getElementById('top10-scroll');
+    const list = document.getElementById('top10-list');
     const top10 = allSongs.slice(0, 10);
 
-    scroll.innerHTML = top10.map(song => `
-        <div class="song-card" onclick="playSong(${song.id})">
-            <img src="${song.cover_image}" alt="${song.title}" class="card-cover">
-            <div class="card-info">
-                <div class="card-title">${song.title}</div>
-                <div class="card-subtitle">${song.singer || 'Unknown'}</div>
+    list.innerHTML = top10.map((song, index) => `
+        <div class="top10-list-item" onclick="playSong(${song.id})">
+            <div class="top10-list-rank ${index < 3 ? 'top3' : ''}">${index + 1}</div>
+            <img src="${song.cover_image}" alt="${song.title}" class="top10-list-cover">
+            <div class="top10-list-info">
+                <div class="top10-list-title">${song.title}</div>
+                <div class="top10-list-artist">${song.singer || 'Unknown'}</div>
+            </div>
+            <div class="top10-list-more">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
             </div>
         </div>
     `).join('');
@@ -142,6 +149,67 @@ function renderRecentlyPlayed() {
     `).join('');
 }
 
+async function renderAlbums() {
+    try {
+        const response = await fetch('/api/albums');
+        const data = await response.json();
+        const grid = document.getElementById('albums-grid');
+
+        if (data.albums && data.albums.length > 0) {
+            grid.innerHTML = data.albums.slice(0, 6).map(album => `
+                <div class="album-card" onclick="playAlbum(${album.id}, '${album.name}')">
+                    <img src="${album.cover_image || '/assets/default-cover.jpg'}" alt="${album.name}" class="album-cover">
+                    <div class="album-info">
+                        <div class="album-title">${album.name}</div>
+                        <div class="album-artist">${album.singer || 'Various Artists'}</div>
+                        <div class="album-count">${album.song_count || 0} songs</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading albums:', error);
+    }
+}
+
+async function playAlbum(albumId, albumName) {
+    try {
+        const response = await fetch(`/api/albums/${albumId}/songs`);
+        const data = await response.json();
+
+        if (data.songs && data.songs.length > 0) {
+            // Play first song of album
+            playSong(data.songs[0].id);
+        }
+    } catch (error) {
+        console.error('Error playing album:', error);
+    }
+}
+
+function renderUpNext() {
+    if (!currentSong) return;
+
+    const currentIndex = allSongs.findIndex(s => s.id === currentSong.id);
+    const nextSongs = [];
+
+    // Get next 3 songs in queue
+    for (let i = 1; i <= 3; i++) {
+        const nextIndex = (currentIndex + i) % allSongs.length;
+        nextSongs.push(allSongs[nextIndex]);
+    }
+
+    const upNextList = document.getElementById('up-next-list');
+    upNextList.innerHTML = nextSongs.map(song => `
+        <div class="up-next-item" onclick="playSong(${song.id})">
+            <img src="${song.cover_image}" alt="${song.title}" class="up-next-cover">
+            <div class="up-next-info">
+                <div class="up-next-song-title">${song.title}</div>
+                <div class="up-next-artist">${song.singer || 'Unknown'}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
 // ========================================
 // PLAYER FUNCTIONS
 // ========================================
@@ -168,6 +236,9 @@ function playSong(songId) {
     albumArt.src = song.cover_image;
     songTitle.textContent = song.title;
     songArtist.textContent = song.singer || 'Unknown';
+
+    // Update up next queue
+    renderUpNext();
 }
 
 function togglePlay() {
@@ -303,17 +374,38 @@ function switchPage(page) {
 // CATEGORY VIEW
 // ========================================
 
-async function viewCategory(categoryId, categoryName) {
+async function viewCategory(categoryIdentifier, categoryName) {
     try {
+        let categoryId = categoryIdentifier;
+
+        // If string (like 'haryanvi'), find the category ID
+        if (typeof categoryIdentifier === 'string') {
+            const response = await fetch('/api/categories');
+            const data = await response.json();
+            const category = data.categories.find(c =>
+                c.icon === categoryIdentifier ||
+                c.name.toLowerCase().includes(categoryIdentifier.toLowerCase())
+            );
+            if (category) {
+                categoryId = category.id;
+            } else {
+                console.log('Category not found:', categoryIdentifier);
+                return;
+            }
+        }
+
         const response = await fetch(`/api/categories/${categoryId}/songs`);
         const data = await response.json();
 
-        // For now, just show first song
+        // Play first song if available
         if (data.songs && data.songs.length > 0) {
             playSong(data.songs[0].id);
+        } else {
+            alert(`No songs in ${categoryName} yet!`);
         }
     } catch (error) {
         console.error('Error loading category:', error);
+        alert('Error loading category. Please try again.');
     }
 }
 

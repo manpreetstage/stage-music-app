@@ -33,12 +33,47 @@
             </div>
         </section>
 
-        <!-- Top 10 Trending -->
+        <!-- Regional Music (4 Big Cards) -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Regional Hits</h2>
+            </div>
+            <div class="regional-grid">
+                <div class="regional-card haryanvi" onclick="viewCategory('haryanvi', 'Haryanvi Hits')">
+                    <div class="regional-icon">🎻</div>
+                    <div class="regional-name">Haryanvi</div>
+                </div>
+                <div class="regional-card rajasthani" onclick="viewCategory('rajasthani', 'Rajasthani Folk')">
+                    <div class="regional-icon">🎺</div>
+                    <div class="regional-name">Rajasthani</div>
+                </div>
+                <div class="regional-card bhojpuri" onclick="viewCategory('bhojpuri', 'Bhojpuri Dhamaka')">
+                    <div class="regional-icon">🎸</div>
+                    <div class="regional-name">Bhojpuri</div>
+                </div>
+                <div class="regional-card gujarati" onclick="viewCategory('gujarati', 'Gujarati Garba')">
+                    <div class="regional-icon">🪕</div>
+                    <div class="regional-name">Gujarati</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top 10 Trending (List Mode) -->
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">🔥 Top 10 Trending</h2>
             </div>
-            <div class="horizontal-scroll" id="top10-scroll">
+            <div class="top10-list" id="top10-list">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Albums -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Popular Albums</h2>
+            </div>
+            <div class="albums-grid" id="albums-grid">
                 <!-- Will be populated by JS -->
             </div>
         </section>
@@ -140,6 +175,14 @@
                         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
                     </svg>
                 </button>
+            </div>
+
+            <!-- Up Next Section -->
+            <div class="up-next-section" id="up-next-section">
+                <div class="up-next-title">Up Next</div>
+                <div id="up-next-list">
+                    <!-- Will be populated by JS -->
+                </div>
             </div>
         </div>
     </div>
