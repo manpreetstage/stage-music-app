@@ -193,7 +193,7 @@ async function renderAlbums() {
 
 async function viewAlbum(albumId, albumName) {
     try {
-        const response = await fetch(`/api/albums/${albumId}/songs`);
+        const response = await fetch(`/api/albums/${albumId}`);
         const data = await response.json();
 
         // Show all songs in album using category view
