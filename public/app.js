@@ -980,6 +980,12 @@ function switchContentView(viewName) {
         selectedView.style.display = 'block';
     }
 
+    // Auto-minimize player when switching views
+    if (playerView.style.display === 'block') {
+        playerView.style.display = 'none';
+        miniPlayer.style.display = 'block';
+    }
+
     // Update active menu item
     document.querySelectorAll('.menu-item').forEach(item => {
         item.classList.remove('active');
@@ -1273,8 +1279,27 @@ function setupEventListeners() {
     // Menu toggle for mobile
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
+
+    // Open/close sidebar
     menuToggle.addEventListener('click', () => {
         sidebar.classList.toggle('open');
+    });
+
+    // Auto-close sidebar when menu item clicked
+    const menuItems = document.querySelectorAll('.menu-item, .playlist-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+    });
+
+    // Close sidebar when clicking outside (mobile)
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+            if (!sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        }
     });
 
     // Set initial volume
@@ -1318,15 +1343,21 @@ async function viewCategory(categoryId, categoryName, categoryIcon, categoryDesc
     try {
         const response = await fetch(`/api/categories/${categoryId}/songs`);
         const data = await response.json();
-        
+
         // Store category data for reload
         window.currentCategoryData = { name: categoryName, icon: categoryIcon, description: categoryDesc };
-        
+
         // Hide other sections
         document.getElementById('categories-section').style.display = 'none';
         document.getElementById('top10-section').style.display = 'none';
         document.getElementById('carousels-container').style.display = 'none';
-        
+
+        // Auto-minimize player when viewing category
+        if (playerView.style.display === 'block') {
+            playerView.style.display = 'none';
+            miniPlayer.style.display = 'block';
+        }
+
         // Show category view
         await showCategoryView(categoryId, categoryName, categoryIcon, categoryDesc, data.songs);
         
@@ -1458,12 +1489,18 @@ function closeCategoryView() {
     if (categoryView) {
         categoryView.remove();
     }
-    
+
     // Show main sections again
     document.getElementById('categories-section').style.display = 'block';
     document.getElementById('top10-section').style.display = 'block';
     document.getElementById('carousels-container').style.display = 'block';
-    
+
+    // Auto-minimize player when going back home
+    if (playerView.style.display === 'block') {
+        playerView.style.display = 'none';
+        miniPlayer.style.display = 'block';
+    }
+
     currentCategoryView = null;
 }
 

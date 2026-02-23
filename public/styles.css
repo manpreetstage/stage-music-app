@@ -2707,10 +2707,33 @@ svg {
 }
 
 .categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
     gap: 20px;
     padding: 20px 0;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--stage-red) transparent;
+}
+
+/* Hide scrollbar but keep functionality */
+.categories-grid::-webkit-scrollbar {
+    height: 6px;
+}
+
+.categories-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.categories-grid::-webkit-scrollbar-thumb {
+    background: var(--stage-red);
+    border-radius: 3px;
+}
+
+.categories-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--stage-dark-red);
 }
 
 .category-card {
@@ -2723,6 +2746,9 @@ svg {
     text-align: center;
     position: relative;
     overflow: hidden;
+    min-width: 220px;
+    max-width: 220px;
+    flex-shrink: 0;
 }
 
 .category-card::before {
@@ -3325,14 +3351,16 @@ svg {
     
     /* === CATEGORIES MOBILE === */
     .categories-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-        padding: 16px;
+        gap: 12px;
+        padding: 16px 16px 16px 0;
+        margin-left: 16px;
     }
     
     .category-card {
         padding: 20px 16px;
         min-height: 140px;
+        min-width: 180px;
+        max-width: 180px;
     }
     
     .category-icon {
@@ -3443,29 +3471,29 @@ svg {
 /* === SMALL MOBILE (< 480px) === */
 @media (max-width: 480px) {
     
-    /* Single Column Categories */
+    /* Smaller Categories for Small Mobile */
     .categories-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 10px;
     }
-    
+
     .category-card {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 16px;
-        min-height: auto;
+        min-width: 160px;
+        max-width: 160px;
+        padding: 16px 12px;
     }
-    
+
     .category-icon {
         width: 56px;
         height: 56px;
-        margin-bottom: 0;
+        font-size: 1.8em;
     }
-    
-    .category-info {
-        flex: 1;
-        text-align: left;
+
+    .category-name {
+        font-size: 0.85em;
+    }
+
+    .category-description {
+        font-size: 0.7em;
     }
     
     /* Smaller album art for very small screens */
