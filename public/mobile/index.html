@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Stage Music - Mobile</title>
+    <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <img src="../assets/stage-logo.png" alt="Stage Music" class="logo">
+        <div class="spacer"></div>
+        <button class="icon-btn" id="search-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+
+        <!-- Quick Picks Section -->
+        <section class="section">
+            <h2 class="section-title">Quick Picks</h2>
+            <div class="quick-picks-grid" id="quick-picks-grid">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Top 10 Trending -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">🔥 Top 10 Trending</h2>
+            </div>
+            <div class="horizontal-scroll" id="top10-scroll">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Categories -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Browse by Mood</h2>
+            </div>
+            <div class="horizontal-scroll" id="categories-scroll">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Recently Played -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recently Played</h2>
+            </div>
+            <div class="horizontal-scroll" id="recent-scroll">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Mini Player (Fixed Bottom) -->
+    <div class="mini-player" id="mini-player" style="display: none;">
+        <img src="" alt="Album Art" class="mini-cover" id="mini-cover">
+        <div class="mini-info">
+            <div class="mini-title" id="mini-title">Song Name</div>
+            <div class="mini-artist" id="mini-artist">Artist</div>
+        </div>
+        <button class="mini-play-btn" id="mini-play-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+        </button>
+        <div class="mini-progress" id="mini-progress"></div>
+    </div>
+
+    <!-- Full Player (Full Screen) -->
+    <div class="full-player" id="full-player">
+        <header class="player-header">
+            <button class="icon-btn" id="minimize-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                </svg>
+            </button>
+            <span class="player-header-title">Now Playing</span>
+            <button class="icon-btn" id="player-menu-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+            </button>
+        </header>
+
+        <div class="player-content">
+            <img src="" alt="Album Art" class="album-art" id="album-art">
+
+            <div class="song-info">
+                <h1 class="song-title" id="song-title">Song Name</h1>
+                <p class="song-artist" id="song-artist">Artist Name</p>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-bar" id="progress-bar-container">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="time-stamps">
+                    <span id="current-time">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" id="shuffle-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="prev-btn">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                    </svg>
+                </button>
+                <button class="control-btn-large" id="play-btn-large">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="next-btn">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="repeat-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-page="home">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" data-page="search">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <span>Search</span>
+        </button>
+        <button class="nav-item" data-page="library">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+            </svg>
+            <span>Library</span>
+        </button>
+        <button class="nav-item" data-page="profile">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            <span>Profile</span>
+        </button>
+    </nav>
+
+    <!-- Hidden Audio Element -->
+    <audio id="audio-player"></audio>
+
+    <script src="mobile.js"></script>
+</body>
+</html>

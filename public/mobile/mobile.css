@@ -1,0 +1,645 @@
+/* ========================================
+   📱 STAGE MUSIC - MOBILE FIRST
+   YouTube Music Inspired Design
+   ======================================== */
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    /* Colors - Pure Black Theme */
+    --bg-primary: #000000;
+    --bg-secondary: #121212;
+    --bg-tertiary: #282828;
+    --bg-elevated: #3E3E3E;
+
+    --text-primary: #FFFFFF;
+    --text-secondary: #B3B3B3;
+    --text-tertiary: #8B8B8B;
+
+    --accent-primary: #E31E24;
+    --accent-hover: #FF4444;
+    --accent-light: rgba(227, 30, 36, 0.1);
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-s: 8px;
+    --space-m: 12px;
+    --space-l: 16px;
+    --space-xl: 24px;
+    --space-xxl: 32px;
+
+    /* Radius */
+    --radius-s: 4px;
+    --radius-m: 8px;
+    --radius-l: 12px;
+    --radius-xl: 16px;
+    --radius-round: 50%;
+
+    /* Shadows */
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-player: 0 -4px 16px rgba(0, 0, 0, 0.5);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   TOP BAR
+   ======================================== */
+
+.top-bar {
+    position: sticky;
+    top: 0;
+    height: 56px;
+    padding: 0 var(--space-l);
+    display: flex;
+    align-items: center;
+    gap: var(--space-m);
+    background: var(--bg-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 90;
+}
+
+.logo {
+    height: 32px;
+    width: auto;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-round);
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.icon-btn:active {
+    background: var(--bg-tertiary);
+}
+
+/* ========================================
+   MAIN CONTENT
+   ======================================== */
+
+.main-content {
+    padding-bottom: 140px; /* Space for mini player + bottom nav */
+    min-height: 100vh;
+}
+
+.section {
+    padding: var(--space-l);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: var(--space-m);
+    color: var(--text-primary);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-m);
+}
+
+.see-all {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* ========================================
+   QUICK PICKS GRID
+   ======================================== */
+
+.quick-picks-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-s);
+}
+
+.quick-pick-card {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-m);
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--bg-tertiary);
+}
+
+.quick-pick-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+.quick-pick-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.quick-pick-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-s);
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+}
+
+.quick-pick-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quick-pick-artist {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quick-pick-rank {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius-s);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.quick-pick-rank.gold {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+}
+
+/* ========================================
+   HORIZONTAL SCROLL
+   ======================================== */
+
+.horizontal-scroll {
+    display: flex;
+    gap: var(--space-m);
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: var(--space-xs);
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* ========================================
+   SONG CARD (Reusable)
+   ======================================== */
+
+.song-card {
+    min-width: 140px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.song-card:active {
+    opacity: 0.8;
+}
+
+.card-cover {
+    width: 140px;
+    height: 140px;
+    border-radius: var(--radius-m);
+    background: var(--bg-tertiary);
+    box-shadow: var(--shadow-card);
+    margin-bottom: var(--space-s);
+    object-fit: cover;
+}
+
+.card-info {
+    padding: 0 var(--space-xs);
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ========================================
+   CATEGORY CARD
+   ======================================== */
+
+.category-card {
+    min-width: 160px;
+    height: 80px;
+    border-radius: var(--radius-m);
+    padding: var(--space-m);
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-elevated) 100%);
+    display: flex;
+    align-items: center;
+    gap: var(--space-m);
+    box-shadow: var(--shadow-card);
+    flex-shrink: 0;
+}
+
+.category-card:active {
+    opacity: 0.8;
+}
+
+.category-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-m);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.category-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* ========================================
+   MINI PLAYER (Fixed Bottom)
+   ======================================== */
+
+.mini-player {
+    position: fixed;
+    bottom: 56px; /* Above bottom nav */
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    padding: var(--space-s) var(--space-m);
+    gap: var(--space-m);
+    z-index: 95;
+    box-shadow: var(--shadow-player);
+    cursor: pointer;
+}
+
+.mini-player:active {
+    background: var(--bg-elevated);
+}
+
+.mini-cover {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-s);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.mini-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mini-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 2px;
+}
+
+.mini-artist {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mini-play-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-round);
+    background: var(--text-primary);
+    border: none;
+    color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mini-play-btn:active {
+    transform: scale(0.95);
+}
+
+.mini-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent-primary);
+    transition: width 0.1s linear;
+}
+
+/* ========================================
+   FULL PLAYER (Full Screen)
+   ======================================== */
+
+.full-player {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-primary);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+}
+
+.full-player.active {
+    display: flex;
+}
+
+.player-header {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-s);
+    gap: var(--space-m);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.player-header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.player-content {
+    flex: 1;
+    padding: var(--space-xxl) var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xxl);
+    align-items: center;
+    justify-content: center;
+}
+
+.album-art {
+    width: 100%;
+    max-width: 360px;
+    aspect-ratio: 1;
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow-elevated);
+    object-fit: cover;
+}
+
+.song-info {
+    text-align: center;
+    width: 100%;
+}
+
+.song-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-s);
+}
+
+.song-artist {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+.progress-section {
+    width: 100%;
+}
+
+.progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin-bottom: var(--space-s);
+    cursor: pointer;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.time-stamps {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xl);
+    width: 100%;
+}
+
+.control-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-round);
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.control-btn:active {
+    background: var(--bg-tertiary);
+}
+
+.control-btn-large {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-round);
+    background: var(--text-primary);
+    border: none;
+    color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.control-btn-large:active {
+    transform: scale(0.95);
+}
+
+/* ========================================
+   BOTTOM NAVIGATION
+   ======================================== */
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--bg-secondary);
+    display: flex;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 100;
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.nav-item svg {
+    width: 24px;
+    height: 24px;
+}
+
+.nav-item.active {
+    color: var(--accent-primary);
+}
+
+.nav-item:active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
+
+.hidden {
+    display: none !important;
+}
+
+/* Loading Skeleton */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--bg-tertiary) 0%,
+        var(--bg-elevated) 50%,
+        var(--bg-tertiary) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (min-width: 768px) {
+    /* Tablet adjustments if needed */
+    .quick-picks-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    /* Desktop - redirect to main app */
+    body::before {
+        content: "Please use desktop version at /";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--bg-tertiary);
+        padding: 24px;
+        border-radius: 12px;
+        text-align: center;
+    }
+}
