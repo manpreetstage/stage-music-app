@@ -83,36 +83,14 @@ function renderQuickPicks() {
 }
 
 function renderTop10() {
-    const top3List = document.getElementById('top3-list');
     const trendingScroll = document.getElementById('trending-scroll');
-    const allTrending = allSongs.slice(0, 9); // Only 9 songs (not 10)
+    const allTrending = allSongs.slice(0, 9); // All 9 songs in horizontal scroll
 
     console.log('renderTop10: Total songs available:', allSongs.length);
     console.log('renderTop10: Trending songs count:', allTrending.length);
 
-    // Top 3 in list mode
-    const top3 = allTrending.slice(0, 3);
-    console.log('renderTop10: Top 3 songs:', top3.length);
-    top3List.innerHTML = top3.map((song, index) => `
-        <div class="top10-list-item" onclick="playSong(${song.id})">
-            <div class="top10-list-rank top3">${index + 1}</div>
-            <img src="${song.cover_image}" alt="${song.title}" class="top10-list-cover">
-            <div class="top10-list-info">
-                <div class="top10-list-title">${song.title}</div>
-                <div class="top10-list-artist">${song.singer || 'Unknown'}</div>
-            </div>
-            <div class="top10-list-more">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                </svg>
-            </div>
-        </div>
-    `).join('');
-
-    // 4-9 in horizontal scroll (6 songs)
-    const trending4to9 = allTrending.slice(3, 9);
-    console.log('renderTop10: Songs 4-9 count:', trending4to9.length);
-    trendingScroll.innerHTML = trending4to9.map(song => `
+    // All 9 songs in horizontal scroll (YouTube Music style)
+    trendingScroll.innerHTML = allTrending.map(song => `
         <div class="song-card" onclick="playSong(${song.id})">
             <img src="${song.cover_image}" alt="${song.title}" class="card-cover">
             <div class="card-info">
@@ -121,6 +99,12 @@ function renderTop10() {
             </div>
         </div>
     `).join('');
+
+    // Hide the top3-list section since we're not using it
+    const top3List = document.getElementById('top3-list');
+    if (top3List) {
+        top3List.style.display = 'none';
+    }
 }
 
 async function renderCategories() {
