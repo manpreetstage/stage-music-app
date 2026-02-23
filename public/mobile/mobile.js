@@ -74,7 +74,6 @@ function renderQuickPicks() {
     grid.innerHTML = picks.map((song, index) => `
         <div class="quick-pick-card" onclick="playSong(${song.id})">
             <img src="${song.cover_image}" alt="${song.title}" class="quick-pick-cover">
-            <div class="quick-pick-rank ${index === 0 ? 'gold' : ''}">${index + 1}</div>
             <div class="quick-pick-overlay">
                 <div class="quick-pick-title">${song.title}</div>
                 <div class="quick-pick-artist">${song.singer || 'Unknown'}</div>
