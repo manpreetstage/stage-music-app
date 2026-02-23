@@ -88,8 +88,12 @@ function renderTop10() {
     const trendingScroll = document.getElementById('trending-scroll');
     const allTrending = allSongs.slice(0, 9); // Only 9 songs (not 10)
 
+    console.log('renderTop10: Total songs available:', allSongs.length);
+    console.log('renderTop10: Trending songs count:', allTrending.length);
+
     // Top 3 in list mode
     const top3 = allTrending.slice(0, 3);
+    console.log('renderTop10: Top 3 songs:', top3.length);
     top3List.innerHTML = top3.map((song, index) => `
         <div class="top10-list-item" onclick="playSong(${song.id})">
             <div class="top10-list-rank top3">${index + 1}</div>
@@ -108,6 +112,7 @@ function renderTop10() {
 
     // 4-9 in horizontal scroll (6 songs)
     const trending4to9 = allTrending.slice(3, 9);
+    console.log('renderTop10: Songs 4-9 count:', trending4to9.length);
     trendingScroll.innerHTML = trending4to9.map(song => `
         <div class="song-card" onclick="playSong(${song.id})">
             <img src="${song.cover_image}" alt="${song.title}" class="card-cover">
