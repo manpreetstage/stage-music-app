@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage All Sections - Stage Music Admin</title>
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #1a1a1a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+
+        .page-header { padding: 20px; background: linear-gradient(135deg, #e31e24, #764ba2); margin-bottom: 24px; position: relative; }
+        .page-title { font-size: 2em; font-weight: 700; margin: 0 0 8px 0; }
+        .page-subtitle { color: rgba(255,255,255,0.8); font-size: 1em; margin: 0; }
+        .header-buttons { position: absolute; top: 20px; right: 20px; display: flex; gap: 12px; }
+        .upload-song-btn { padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 1em; cursor: pointer; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); transition: all 0.3s; }
+        .upload-song-btn:hover { background: #218838; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(40, 167, 69, 0.6); }
+        .logout-btn { padding: 12px 24px; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 1em; cursor: pointer; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); transition: all 0.3s; }
+        .logout-btn:hover { background: #c82333; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(220, 53, 69, 0.6); }
+
+        .tabs-container { display: flex; gap: 8px; padding: 0 20px; margin-bottom: 24px; border-bottom: 2px solid #333; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tab-btn { padding: 12px 20px; background: transparent; color: #888; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-size: 0.95em; font-weight: 600; transition: all 0.3s; white-space: nowrap; }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active { color: #e31e24; border-bottom-color: #e31e24; }
+
+        .tab-content { display: none; padding: 0 20px 40px 20px; }
+        .tab-content.active { display: block; }
+
+        .section { background: #2a2a2a; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .section-title { font-size: 1.4em; font-weight: 600; margin: 0 0 16px 0; color: #e31e24; }
+
+        .info-box { background: rgba(255, 193, 7, 0.15); border: 2px solid #ffc107; border-radius: 8px; padding: 16px; margin-bottom: 24px; color: #ffc107; }
+
+        .songs-list { display: grid; gap: 16px; }
+        .song-item-list { display: flex; align-items: center; gap: 16px; padding: 16px; background: #1a1a1a; border-radius: 8px; border: 2px solid #333; cursor: move; transition: all 0.2s; }
+        .song-item-list:hover { border-color: #e31e24; background: #252525; }
+        .song-item-list.dragging { opacity: 0.5; border-color: #28a745; }
+        .song-item-list.drag-over { border-top: 3px solid #28a745; }
+        .drag-handle { cursor: grab; font-size: 20px; color: #888; margin-right: 8px; }
+        .drag-handle:active { cursor: grabbing; }
+        .song-number { width: 32px; height: 32px; background: #e31e24; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .song-cover-small { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+        .song-info-small { flex: 1; min-width: 0; }
+        .song-title-small { font-weight: 600; font-size: 1em; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+        .song-artist-small { color: #888; font-size: 0.85em; }
+        .remove-btn { padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; min-height: 44px; }
+        .remove-btn:hover { background: #c82333; transform: scale(1.05); }
+
+        .search-box { width: 100%; padding: 14px; font-size: 16px; border: 2px solid #333; border-radius: 8px; margin-bottom: 16px; background: #1a1a1a; color: #fff; }
+        .search-box:focus { outline: none; border-color: #e31e24; }
+
+        .songs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding-bottom: 10px; }
+        .song-item { background: #1a1a1a; border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .song-item:hover { background: #333; border-color: #e31e24; transform: translateY(-2px); }
+        .song-item.selected { border-color: #28a745; background: rgba(40, 167, 69, 0.2); }
+        .song-cover { width: 100%; aspect-ratio: 1; border-radius: 6px; object-fit: cover; margin-bottom: 8px; }
+        .song-name { font-weight: 600; font-size: 0.9em; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+        .song-artist { font-size: 0.8em; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .hint-box { margin: 20px 0; padding: 15px; background: rgba(40, 167, 69, 0.15); border-radius: 8px; border: 2px dashed #28a745; color: #28a745; font-weight: 600; text-align: center; }
+        .add-btn-container { background: #2a2a2a; padding: 20px; margin-top: 20px; border-radius: 8px; text-align: center; }
+        .add-btn { padding: 16px 24px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1.1em; transition: all 0.2s; width: 100%; max-width: 400px; min-height: 56px; }
+        .add-btn:hover:not(:disabled) { background: #218838; transform: scale(1.02); }
+        .add-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.6; }
+        .add-btn:not(:disabled) { box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); } 50% { box-shadow: 0 4px 20px rgba(40, 167, 69, 0.6); } }
+        .selection-status { margin-top: 12px; color: #888; font-size: 0.9em; }
+        .empty-state { text-align: center; padding: 40px; color: #888; }
+
+        /* Edit Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .modal-content { background: #2a2a2a; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 2px solid #333; }
+        .modal-header h2 { margin: 0; font-size: 1.5em; }
+        .modal-close { background: none; border: none; color: #fff; font-size: 2em; cursor: pointer; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { color: #e31e24; }
+        .form-group { padding: 16px 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #fff; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; background: #1a1a1a; border: 2px solid #333; border-radius: 6px; color: #fff; font-size: 1em; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #e31e24; }
+        .form-group input[type="file"] { padding: 8px; cursor: pointer; }
+        .form-group input[type="file"]::-webkit-file-upload-button { background: #e31e24; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 12px; }
+        .form-group input[type="file"]::-webkit-file-upload-button:hover { background: #c41a1f; }
+        .form-group small { display: block; margin: 4px 0; }
+        .modal-actions { display: flex; gap: 12px; padding: 20px; border-top: 2px solid #333; }
+        .btn-primary { flex: 1; padding: 14px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1em; }
+        .btn-primary:hover { background: #218838; }
+        .btn-secondary { flex: 1; padding: 14px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1em; }
+        .btn-secondary:hover { background: #5a6268; }
+        .edit-btn { padding: 10px 20px; background: #ffc107; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; margin-right: 8px; min-height: 44px; }
+        .edit-btn:hover { background: #e0a800; transform: scale(1.05); }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .page-header { padding: 16px; }
+            .page-title { font-size: 1.5em; }
+            .tabs-container { padding: 0 12px; }
+            .tab-btn { padding: 10px 16px; font-size: 0.9em; }
+            .tab-content { padding: 0 12px 24px 12px; }
+            .section { padding: 16px; }
+            .songs-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; max-height: 350px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1 class="page-title">🎵 Stage Music - All Sections Admin</h1>
+        <p class="page-subtitle">Manage Quick Picks, Trending, 5 Custom Sections, Regional Categories & Albums (Haryanvi, Rajasthani, Bhojpuri)</p>
+        <div class="header-buttons">
+            <button class="upload-song-btn" onclick="openUploadModal()" id="upload-btn" style="display:none;">➕ Upload New Song</button>
+            <button class="logout-btn" onclick="handleLogout()" id="logout-btn" style="display:none;">Logout</button>
+        </div>
+    </div>
+
+    <!-- Login Required Overlay -->
+    <div id="login-required-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:99999; display:flex; align-items:center; justify-content:center;">
+        <div style="background:#2a2a2a; padding:40px; border-radius:16px; max-width:400px; width:90%; text-align:center;">
+            <h2 style="margin:0 0 16px 0; font-size:2em;">🔒 Admin Login</h2>
+            <p style="color:#888; margin-bottom:24px;">Admin panel access karne ke liye login karo</p>
+
+            <form id="admin-login-form" onsubmit="handleAdminLogin(event)" style="text-align:left;">
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; margin-bottom:8px; font-weight:600;">Username</label>
+                    <input type="text" id="login-username" required style="width:100%; padding:12px; background:#1a1a1a; border:2px solid #333; border-radius:6px; color:#fff; font-size:1em;">
+                </div>
+
+                <div style="margin-bottom:24px;">
+                    <label style="display:block; margin-bottom:8px; font-weight:600;">Password</label>
+                    <input type="password" id="login-password" required style="width:100%; padding:12px; background:#1a1a1a; border:2px solid #333; border-radius:6px; color:#fff; font-size:1em;">
+                </div>
+
+                <div id="login-error" style="display:none; padding:12px; background:rgba(220,53,69,0.2); border:2px solid #dc3545; border-radius:6px; color:#dc3545; margin-bottom:16px;"></div>
+
+                <button type="submit" style="width:100%; padding:14px; background:#28a745; color:white; border:none; border-radius:6px; font-weight:600; font-size:1em; cursor:pointer;">
+                    Login
+                </button>
+            </form>
+
+            <p style="color:#888; margin-top:16px; font-size:0.9em;">Default: admin / admin123</p>
+        </div>
+    </div>
+
+    <div class="tabs-container" id="tabs-container">
+        <!-- Tabs will be loaded dynamically -->
+    </div>
+
+    <div id="tabs-content">
+        <!-- Tab contents will be loaded dynamically -->
+    </div>
+
+    <!-- Edit Song Modal -->
+    <div class="modal-overlay" id="edit-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Song Details</h2>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="edit-song-form" onsubmit="submitEditSong(event)">
+                <input type="hidden" id="edit-song-id">
+
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="edit-title" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Singer *</label>
+                    <input type="text" id="edit-singer" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Artist</label>
+                    <input type="text" id="edit-artist">
+                </div>
+
+                <div class="form-group">
+                    <label>Lyricist</label>
+                    <input type="text" id="edit-lyricist">
+                </div>
+
+                <div class="form-group">
+                    <label>Music Director</label>
+                    <input type="text" id="edit-music-director">
+                </div>
+
+                <div class="form-group">
+                    <label>Composer</label>
+                    <input type="text" id="edit-composer">
+                </div>
+
+                <div class="form-group">
+                    <label>Producer</label>
+                    <input type="text" id="edit-producer">
+                </div>
+
+                <div class="form-group">
+                    <label>Language</label>
+                    <select id="edit-language">
+                        <option value="">Select Language</option>
+                        <option value="Haryanvi">Haryanvi</option>
+                        <option value="Rajasthani">Rajasthani</option>
+                        <option value="Bhojpuri">Bhojpuri</option>
+                        <option value="Gujarati">Gujarati</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Punjabi">Punjabi</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Cover Image</label>
+                    <div style="margin-bottom: 8px;">
+                        <input type="file" id="edit-cover-file" accept="image/*">
+                    </div>
+                    <small style="color: #888;">Ya phir URL paste karo:</small>
+                    <input type="text" id="edit-cover-image" placeholder="https://..." style="margin-top: 4px;">
+                </div>
+
+                <div class="form-group">
+                    <label>Audio File</label>
+                    <div style="margin-bottom: 8px;">
+                        <input type="file" id="edit-audio-file-input" accept="audio/*">
+                    </div>
+                    <small style="color: #888;">Ya phir URL paste karo:</small>
+                    <input type="text" id="edit-audio-file" placeholder="https://..." style="margin-top: 4px;">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Song Modal -->
+    <div class="modal-overlay" id="upload-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Upload New Song</h2>
+                <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <form id="upload-song-form" onsubmit="submitUploadSong(event)">
+                <div class="form-group">
+                    <label>Title * <small style="color: #888;">(required)</small></label>
+                    <input type="text" id="upload-title" required placeholder="Song ka title">
+                </div>
+
+                <div class="form-group">
+                    <label>Singer * <small style="color: #888;">(required)</small></label>
+                    <input type="text" id="upload-singer" required placeholder="Singer ka naam">
+                </div>
+
+                <div class="form-group">
+                    <label>Lyricist <small style="color: #888;">(Lyrics writer)</small></label>
+                    <input type="text" id="upload-lyricist" placeholder="Lyrics writer ka naam">
+                </div>
+
+                <div class="form-group">
+                    <label>Music Director</label>
+                    <input type="text" id="upload-music-director" placeholder="Music director ka naam">
+                </div>
+
+                <div class="form-group">
+                    <label>Composer</label>
+                    <input type="text" id="upload-composer" placeholder="Composer ka naam">
+                </div>
+
+                <div class="form-group">
+                    <label>Producer/Company</label>
+                    <input type="text" id="upload-company" placeholder="Producer ya Music company/label">
+                </div>
+
+                <div class="form-group">
+                    <label>Language *</label>
+                    <select id="upload-language" required>
+                        <option value="">Select Language</option>
+                        <option value="Haryanvi">Haryanvi</option>
+                        <option value="Rajasthani">Rajasthani</option>
+                        <option value="Bhojpuri">Bhojpuri</option>
+                        <option value="Gujarati">Gujarati</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Punjabi">Punjabi</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Lyrics <small style="color: #888;">(optional)</small></label>
+                    <textarea id="upload-lyrics" rows="3" placeholder="Song ke lyrics (optional)"></textarea>
+                </div>
+
+                <div class="form-group" style="border: 2px dashed #28a745; border-radius: 8px; padding: 20px; background: rgba(40, 167, 69, 0.1);">
+                    <label style="color: #28a745;">📷 Cover Image * <small>(required)</small></label>
+                    <input type="file" id="upload-cover-file" accept="image/*" required style="border-color: #28a745;">
+                    <small style="color: #28a745; display: block; margin-top: 8px;">Automatically compressed before upload</small>
+                </div>
+
+                <div class="form-group" style="border: 2px dashed #e31e24; border-radius: 8px; padding: 20px; background: rgba(227, 30, 36, 0.1);">
+                    <label style="color: #e31e24;">🎵 Audio File * <small>(required)</small></label>
+                    <input type="file" id="upload-audio-file" accept="audio/*" required style="border-color: #e31e24;">
+                    <small style="color: #e31e24; display: block; margin-top: 8px;">MP3, WAV, or other audio formats</small>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background: #28a745;">
+                        ⬆️ Upload Song
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Compression Library -->
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script src="sections.js"></script>
+</body>
+</html>

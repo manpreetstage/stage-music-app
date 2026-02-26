@@ -43,6 +43,24 @@ app.use(session({
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
+
+// Mobile detection middleware - redirect mobile devices to mobile version
+app.get('/', (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+
+    if (isMobile) {
+        return res.redirect('/mobile/');
+    }
+    next();
+});
+
+// Disable caching in development
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    next();
+});
+
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
@@ -112,7 +130,7 @@ const upload = multer({
         }
     },
     limits: {
-        fileSize: 100 * 1024 * 1024 // 100MB per file
+        fileSize: 500 * 1024 * 1024 // 500MB per file
     }
 });
 
@@ -128,14 +146,19 @@ const db = new sqlite3.Database('./stage_music.db', (err) => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             singer TEXT NOT NULL,
+            artist TEXT,
+            lyricist TEXT,
             music_director TEXT,
             composer TEXT,
+            producer TEXT,
             company TEXT,
             lyrics TEXT,
             audio_file TEXT NOT NULL,
             cover_image TEXT,
             duration TEXT,
             plays INTEGER DEFAULT 0,
+            language TEXT DEFAULT 'Hindi',
+            user_id INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`, (err) => {
             if (err) {
@@ -143,6 +166,28 @@ const db = new sqlite3.Database('./stage_music.db', (err) => {
             } else {
                 console.log('✅ Songs table ready');
             }
+        });
+    }
+});
+
+// Create user play history table
+db.run(`CREATE TABLE IF NOT EXISTS user_play_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    song_id INTEGER NOT NULL,
+    played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
+)`, (err) => {
+    if (err) {
+        console.error('Error creating user_play_history table:', err);
+    } else {
+        console.log('✅ User play history table ready');
+
+        // Create index for faster queries
+        db.run(`CREATE INDEX IF NOT EXISTS idx_play_history_user
+                ON user_play_history(user_id, played_at DESC)`, (err) => {
+            if (err) console.error('Error creating index:', err);
         });
     }
 });
@@ -423,6 +468,328 @@ app.delete('/api/featured-songs/:id', (req, res) => {
     );
 });
 
+// ==================== QUICK PICKS ENDPOINTS ====================
+
+// Get quick picks (ONLY admin selected, no auto-fill)
+app.get('/api/quick-picks', (req, res) => {
+    const query = `
+        SELECT s.*, qp.position
+        FROM songs s
+        JOIN quick_picks qp ON s.id = qp.song_id
+        ORDER BY qp.position ASC
+        LIMIT 9
+    `;
+
+    db.all(query, [], (err, quickPicks) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        // Return ONLY admin's manual selections - NO AUTO-FILL
+        res.json({ songs: quickPicks });
+    });
+});
+
+// Get admin quick picks (only manually featured)
+app.get('/api/admin/quick-picks', (req, res) => {
+    const query = `
+        SELECT qp.id as pick_id, qp.position, s.*
+        FROM quick_picks qp
+        JOIN songs s ON qp.song_id = s.id
+        ORDER BY qp.position ASC
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ songs: rows });
+    });
+});
+
+// Add song to quick picks
+app.post('/api/admin/quick-picks', (req, res) => {
+    const { song_id, position } = req.body;
+
+    if (!song_id) {
+        res.status(400).json({ error: 'song_id is required' });
+        return;
+    }
+
+    const pos = position || 999;
+
+    db.run(
+        'INSERT OR REPLACE INTO quick_picks (song_id, position) VALUES (?, ?)',
+        [song_id, pos],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ success: true, id: this.lastID });
+        }
+    );
+});
+
+// Remove song from quick picks
+app.delete('/api/admin/quick-picks/:id', (req, res) => {
+    const songId = req.params.id;
+
+    db.run(
+        'DELETE FROM quick_picks WHERE song_id = ?',
+        [songId],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ success: true, deleted: this.changes });
+        }
+    );
+});
+
+// ==================== TRENDING SONGS ENDPOINTS ====================
+
+// Get trending songs (ONLY admin selected, no auto-fill)
+app.get('/api/trending', (req, res) => {
+    const query = `
+        SELECT s.*, t.position
+        FROM songs s
+        JOIN trending_songs t ON s.id = t.song_id
+        ORDER BY t.position ASC
+        LIMIT 9
+    `;
+
+    db.all(query, [], (err, trending) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        // Return ONLY admin's manual selections - NO AUTO-FILL
+        res.json({ songs: trending });
+    });
+});
+
+// Get admin trending songs (only manually featured)
+app.get('/api/admin/trending', (req, res) => {
+    const query = `
+        SELECT t.id as trending_id, t.position, s.*
+        FROM trending_songs t
+        JOIN songs s ON t.song_id = s.id
+        ORDER BY t.position ASC
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ songs: rows });
+    });
+});
+
+// Add song to trending
+app.post('/api/admin/trending', (req, res) => {
+    const { song_id, position } = req.body;
+
+    if (!song_id) {
+        res.status(400).json({ error: 'song_id is required' });
+        return;
+    }
+
+    const pos = position || 999;
+
+    db.run(
+        'INSERT OR REPLACE INTO trending_songs (song_id, position) VALUES (?, ?)',
+        [song_id, pos],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ success: true, id: this.lastID });
+        }
+    );
+});
+
+// Remove song from trending
+app.delete('/api/admin/trending/:id', (req, res) => {
+    const songId = req.params.id;
+
+    db.run(
+        'DELETE FROM trending_songs WHERE song_id = ?',
+        [songId],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ success: true, deleted: this.changes });
+        }
+    );
+});
+
+// ==================== CUSTOM SECTIONS ENDPOINTS ====================
+
+// Get all custom sections
+app.get('/api/custom-sections', (req, res) => {
+    db.all('SELECT * FROM custom_sections ORDER BY display_order ASC', (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ sections: rows });
+    });
+});
+
+// Get songs in a custom section (for mobile app)
+app.get('/api/custom-sections/:id/songs', (req, res) => {
+    const sectionId = req.params.id;
+
+    const query = `
+        SELECT s.*, css.position
+        FROM songs s
+        JOIN custom_section_songs css ON s.id = css.song_id
+        WHERE css.section_id = ?
+        ORDER BY css.position ASC
+    `;
+
+    db.all(query, [sectionId], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ songs: rows });
+    });
+});
+
+// Get songs for admin panel (with section info)
+app.get('/api/admin/custom-sections/:id/songs', (req, res) => {
+    const sectionId = req.params.id;
+
+    const query = `
+        SELECT css.id as mapping_id, css.position, s.*
+        FROM custom_section_songs css
+        JOIN songs s ON css.song_id = s.id
+        WHERE css.section_id = ?
+        ORDER BY css.position ASC
+    `;
+
+    db.all(query, [sectionId], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ songs: rows });
+    });
+});
+
+// Add song to custom section (Admin)
+app.post('/api/admin/custom-sections/:id/songs', (req, res) => {
+    const sectionId = req.params.id;
+    const { song_id, position } = req.body;
+
+    if (!song_id) {
+        res.status(400).json({ error: 'song_id is required' });
+        return;
+    }
+
+    // Get max position if not provided
+    if (!position) {
+        db.get(
+            'SELECT MAX(position) as max_pos FROM custom_section_songs WHERE section_id = ?',
+            [sectionId],
+            (err, row) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+
+                const newPosition = (row.max_pos || 0) + 1;
+
+                db.run(
+                    'INSERT OR REPLACE INTO custom_section_songs (section_id, song_id, position) VALUES (?, ?, ?)',
+                    [sectionId, song_id, newPosition],
+                    function(err) {
+                        if (err) {
+                            res.status(500).json({ error: err.message });
+                            return;
+                        }
+                        res.json({ success: true, id: this.lastID });
+                    }
+                );
+            }
+        );
+    } else {
+        db.run(
+            'INSERT OR REPLACE INTO custom_section_songs (section_id, song_id, position) VALUES (?, ?, ?)',
+            [sectionId, song_id, position],
+            function(err) {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ success: true, id: this.lastID });
+            }
+        );
+    }
+});
+
+// Remove song from custom section (Admin)
+app.delete('/api/admin/custom-sections/:sectionId/songs/:songId', (req, res) => {
+    const { sectionId, songId } = req.params;
+
+    db.run(
+        'DELETE FROM custom_section_songs WHERE section_id = ? AND song_id = ?',
+        [sectionId, songId],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ success: true, deleted: this.changes });
+        }
+    );
+});
+
+// Reorder songs in custom section (Admin)
+app.put('/api/admin/custom-sections/:sectionId/reorder', (req, res) => {
+    const { sectionId } = req.params;
+    const { songIds } = req.body; // Array of song IDs in new order
+
+    if (!songIds || !Array.isArray(songIds)) {
+        res.status(400).json({ error: 'songIds array is required' });
+        return;
+    }
+
+    // Update positions for all songs
+    const stmt = db.prepare(
+        'UPDATE custom_section_songs SET position = ? WHERE section_id = ? AND song_id = ?'
+    );
+
+    let completed = 0;
+    let errors = [];
+
+    songIds.forEach((songId, index) => {
+        stmt.run(index + 1, sectionId, songId, (err) => {
+            if (err) errors.push(err);
+            completed++;
+
+            if (completed === songIds.length) {
+                stmt.finalize();
+                if (errors.length > 0) {
+                    res.status(500).json({ error: 'Some updates failed', errors });
+                } else {
+                    res.json({ success: true, updated: songIds.length });
+                }
+            }
+        });
+    });
+});
+
 // ==================== CATEGORY/PLAYLIST ENDPOINTS ====================
 
 // Get all categories
@@ -499,7 +866,91 @@ app.delete('/api/categories/:categoryId/songs/:songId', (req, res) => {
     );
 });
 
+// Reorder songs in category (Admin only)
+app.put('/api/categories/:categoryId/reorder', (req, res) => {
+    const { categoryId } = req.params;
+    const { songIds } = req.body;
+
+    if (!songIds || !Array.isArray(songIds)) {
+        res.status(400).json({ error: 'songIds array is required' });
+        return;
+    }
+
+    // Update position for each song
+    const updatePromises = songIds.map((songId, index) => {
+        return new Promise((resolve, reject) => {
+            db.run(
+                'UPDATE category_songs SET position = ? WHERE category_id = ? AND song_id = ?',
+                [index + 1, categoryId, songId],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    });
+
+    Promise.all(updatePromises)
+        .then(() => res.json({ success: true }))
+        .catch(err => res.status(500).json({ error: err.message }));
+});
+
 // ==================== END CATEGORY ENDPOINTS ====================
+
+// ==================== ALBUM MANAGEMENT ENDPOINTS ====================
+
+// Get albums by language (Admin)
+app.get('/api/admin/albums/:language', (req, res) => {
+    const { language } = req.params;
+
+    const query = `
+        SELECT a.*, COUNT(s.id) as song_count
+        FROM albums a
+        LEFT JOIN songs s ON a.id = s.album_id
+        WHERE a.language = ?
+        GROUP BY a.id
+        ORDER BY a.display_order ASC, a.id ASC
+    `;
+
+    db.all(query, [language], (err, albums) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ albums: albums });
+    });
+});
+
+// Reorder albums by language (Admin only)
+app.put('/api/admin/albums/:language/reorder', (req, res) => {
+    const { language } = req.params;
+    const { albumIds } = req.body;
+
+    if (!albumIds || !Array.isArray(albumIds)) {
+        res.status(400).json({ error: 'albumIds array is required' });
+        return;
+    }
+
+    // Update display_order for each album
+    const updatePromises = albumIds.map((albumId, index) => {
+        return new Promise((resolve, reject) => {
+            db.run(
+                'UPDATE albums SET display_order = ? WHERE id = ? AND language = ?',
+                [index + 1, albumId, language],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    });
+
+    Promise.all(updatePromises)
+        .then(() => res.json({ success: true }))
+        .catch(err => res.status(500).json({ error: err.message }));
+});
+
+// ==================== END ALBUM MANAGEMENT ENDPOINTS ====================
 
 // Get single song
 app.get('/api/songs/:id', (req, res) => {
@@ -516,6 +967,106 @@ app.get('/api/songs/:id', (req, res) => {
     });
 });
 
+// Update song details with file uploads (Admin only)
+app.put('/api/admin/songs/:id', upload.fields([
+    { name: 'audio', maxCount: 1 },
+    { name: 'cover', maxCount: 1 }
+]), (req, res) => {
+    const songId = req.params.id;
+
+    // Get text fields from body
+    const {
+        title,
+        singer,
+        artist,
+        lyricist,
+        music_director,
+        composer,
+        producer,
+        language,
+        cover_image_url,
+        audio_file_url
+    } = req.body;
+
+    // Build dynamic SQL query based on provided fields
+    const updates = [];
+    const values = [];
+
+    if (title !== undefined && title !== '') {
+        updates.push('title = ?');
+        values.push(title);
+    }
+    if (singer !== undefined && singer !== '') {
+        updates.push('singer = ?');
+        values.push(singer);
+    }
+    if (artist !== undefined && artist !== '') {
+        updates.push('artist = ?');
+        values.push(artist);
+    }
+    if (lyricist !== undefined && lyricist !== '') {
+        updates.push('lyricist = ?');
+        values.push(lyricist);
+    }
+    if (music_director !== undefined && music_director !== '') {
+        updates.push('music_director = ?');
+        values.push(music_director);
+    }
+    if (composer !== undefined && composer !== '') {
+        updates.push('composer = ?');
+        values.push(composer);
+    }
+    if (producer !== undefined && producer !== '') {
+        updates.push('producer = ?');
+        values.push(producer);
+    }
+    if (language !== undefined && language !== '') {
+        updates.push('language = ?');
+        values.push(language);
+    }
+
+    // Handle cover image: uploaded file takes priority over URL
+    if (req.files && req.files.cover) {
+        const coverS3Url = req.files.cover[0].location;
+        updates.push('cover_image = ?');
+        values.push(coverS3Url);
+        console.log('✅ New cover uploaded to S3:', coverS3Url);
+    } else if (cover_image_url !== undefined && cover_image_url !== '') {
+        updates.push('cover_image = ?');
+        values.push(cover_image_url);
+    }
+
+    // Handle audio file: uploaded file takes priority over URL
+    if (req.files && req.files.audio) {
+        const audioS3Url = req.files.audio[0].location;
+        updates.push('audio_file = ?');
+        values.push(audioS3Url);
+        console.log('✅ New audio uploaded to S3:', audioS3Url);
+    } else if (audio_file_url !== undefined && audio_file_url !== '') {
+        updates.push('audio_file = ?');
+        values.push(audio_file_url);
+    }
+
+    if (updates.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    values.push(songId);
+    const sql = `UPDATE songs SET ${updates.join(', ')} WHERE id = ?`;
+
+    db.run(sql, values, function(err) {
+        if (err) {
+            console.error('Error updating song:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Song not found' });
+        }
+        console.log('✅ Song updated successfully:', songId);
+        res.json({ success: true, message: 'Song updated successfully' });
+    });
+});
+
 // Upload new song
 app.post('/api/upload', isAuthenticated, upload.fields([
     { name: 'audio', maxCount: 1 },
@@ -525,11 +1076,18 @@ app.post('/api/upload', isAuthenticated, upload.fields([
         return res.status(400).json({ error: 'No audio file uploaded' });
     }
 
-    const { title, singer, music_director, composer, company, lyrics, language } = req.body;
+    const {
+        title,
+        singer,
+        lyricist,
+        music_director,
+        composer,
+        company,
+        lyrics,
+        language
+    } = req.body;
 
     if (!title || !singer) {
-        // Files will remain in S3 if validation fails (acceptable for now)
-        // TODO: Implement S3 cleanup for failed uploads
         return res.status(400).json({ error: 'Title and Singer are required' });
     }
 
@@ -538,13 +1096,28 @@ app.post('/api/upload', isAuthenticated, upload.fields([
     const coverImage = req.files.cover ? req.files.cover[0].location : null;
     const userId = req.session.userId; // Get user ID from session
 
-    const sql = `INSERT INTO songs (title, singer, music_director, composer, company, lyrics, audio_file, cover_image, language, user_id)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    console.log('📤 Uploading new song:', title, 'by', singer);
 
-    db.run(sql, [title, singer, music_director, composer, company, lyrics, audioFile, coverImage, language || 'Hindi', userId], function(err) {
+    const sql = `INSERT INTO songs (
+        title, singer, lyricist, music_director, composer,
+        company, lyrics, audio_file, cover_image, language, user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    db.run(sql, [
+        title,
+        singer,
+        lyricist || '',
+        music_director || '',
+        composer || '',
+        company || '',
+        lyrics || '',
+        audioFile,
+        coverImage,
+        language || 'Hindi',
+        userId
+    ], function(err) {
         if (err) {
-            // Files remain in S3 if database insert fails (acceptable for now)
-            // TODO: Implement S3 cleanup for failed database inserts
+            console.error('❌ Database insert error:', err);
             return res.status(500).json({ error: err.message });
         }
 
@@ -597,8 +1170,82 @@ app.get('/api/search', (req, res) => {
             res.status(500).json({ error: err.message });
             return;
         }
+        res.json({ results: rows });
+    });
+});
+
+// Track play history
+app.post('/api/play-history', (req, res) => {
+    const { song_id } = req.body;
+    const userId = req.session.userId || null; // null for guests
+
+    if (!song_id) {
+        return res.status(400).json({ error: 'Song ID required' });
+    }
+
+    // Insert play record
+    db.run('INSERT INTO user_play_history (user_id, song_id) VALUES (?, ?)',
+        [userId, song_id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+
+        // Increment global play count
+        db.run('UPDATE songs SET plays = plays + 1 WHERE id = ?', [song_id]);
+        res.json({ success: true });
+    });
+});
+
+// Get recently played (authenticated)
+app.get('/api/recently-played', isAuthenticated, (req, res) => {
+    const userId = req.session.userId;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const sql = `
+        SELECT DISTINCT s.*, MAX(uph.played_at) as last_played
+        FROM songs s
+        INNER JOIN user_play_history uph ON s.id = uph.song_id
+        WHERE uph.user_id = ?
+        GROUP BY s.id
+        ORDER BY last_played DESC
+        LIMIT ?
+    `;
+
+    db.all(sql, [userId, limit], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ songs: rows });
     });
+});
+
+// Get user stats (authenticated)
+app.get('/api/user/stats', isAuthenticated, (req, res) => {
+    const userId = req.session.userId;
+
+    // Fetch stats in parallel
+    Promise.all([
+        // Playlists count
+        new Promise((resolve, reject) => {
+            db.get('SELECT COUNT(*) as count FROM playlists WHERE user_id = ?',
+                [userId], (err, row) => err ? reject(err) : resolve({ playlists: row.count }));
+        }),
+        // Songs saved count
+        new Promise((resolve, reject) => {
+            db.get(`SELECT COUNT(DISTINCT ps.song_id) as count
+                    FROM playlist_songs ps
+                    INNER JOIN playlists p ON ps.playlist_id = p.id
+                    WHERE p.user_id = ?`,
+                [userId], (err, row) => err ? reject(err) : resolve({ songs_saved: row.count }));
+        }),
+        // Total plays count
+        new Promise((resolve, reject) => {
+            db.get('SELECT COUNT(*) as count FROM user_play_history WHERE user_id = ?',
+                [userId], (err, row) => err ? reject(err) : resolve({ total_plays: row.count }));
+        })
+    ])
+    .then(results => res.json({ stats: Object.assign({}, ...results) }))
+    .catch(err => res.status(500).json({ error: err.message }));
 });
 
 // Delete song (user can delete own songs, admin can delete any)
@@ -1248,13 +1895,24 @@ app.get('/api/albums/:id', (req, res) => {
 
 // Get all albums
 app.get('/api/albums', (req, res) => {
+    // Disable caching
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     const sql = `
-        SELECT a.*, COUNT(s.id) as song_count, u.username as creator_name
+        SELECT a.*,
+               (SELECT COUNT(*) FROM songs WHERE album_id = a.id) as song_count,
+               u.username as creator_name,
+               CASE a.language
+                   WHEN 'Haryanvi' THEN 1
+                   WHEN 'Rajasthani' THEN 2
+                   WHEN 'Bhojpuri' THEN 3
+                   ELSE 99
+               END as language_order
         FROM albums a
-        LEFT JOIN songs s ON a.id = s.album_id
         LEFT JOIN users u ON a.user_id = u.id
-        GROUP BY a.id
-        ORDER BY a.created_at DESC
+        ORDER BY language_order ASC, a.display_order ASC, a.id ASC
     `;
 
     db.all(sql, [], (err, albums) => {
