@@ -15,6 +15,7 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const AWS = require('aws-sdk');
 const multerS3 = require('multer-s3');
+const { optimizeAndUploadImage, transcodeAndUploadAudio } = require('./media-optimizer');
 
 // Configure AWS SDK
 AWS.config.update({
@@ -27,6 +28,24 @@ const s3 = new AWS.S3();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ========================================
+// COMPRESSION (For Android Performance)
+// ========================================
+const compression = require('compression');
+
+// Enable gzip compression for all responses
+app.use(compression({
+    level: 6, // Compression level (0-9, 6 is good balance)
+    threshold: 1024, // Only compress responses > 1KB
+    filter: (req, res) => {
+        // Compress everything except images (already compressed)
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    }
+}));
 
 // Middleware
 app.use(cors());
@@ -120,7 +139,57 @@ const upload = multer({
             const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
             const mimetype = file.mimetype.startsWith('image/');
 
+            // Accept if either mimetype is image OR extension is valid
+            if (mimetype || extname) {
+                return cb(null, true);
+            } else {
+                cb(new Error('Only image files are allowed for cover!'));
+            }
+        } else {
+            cb(null, true);
+        }
+    },
+    limits: {
+        fileSize: 500 * 1024 * 1024 // 500MB per file
+    }
+});
+
+// Configure multer for LOCAL uploads (for optimization before S3)
+const tempUploadDir = './temp_uploads';
+if (!fs.existsSync(tempUploadDir)) {
+    fs.mkdirSync(tempUploadDir, { recursive: true });
+}
+
+const uploadLocal = multer({
+    storage: multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, tempUploadDir);
+        },
+        filename: function (req, file, cb) {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, uniqueSuffix + path.extname(file.originalname));
+        }
+    }),
+    fileFilter: function (req, file, cb) {
+        // Audio files validation
+        if (file.fieldname === 'audio' || file.fieldname.startsWith('audio_')) {
+            const allowedTypes = /mp3|wav|m4a|aac|flac|ogg|wma/;
+            const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+            const mimetype = allowedTypes.test(file.mimetype) || file.mimetype.startsWith('audio/');
+
             if (mimetype && extname) {
+                return cb(null, true);
+            } else {
+                cb(new Error('Only audio files are allowed!'));
+            }
+        }
+        // Cover image validation
+        else if (file.fieldname === 'cover') {
+            const allowedTypes = /jpeg|jpg|png|gif|webp/;
+            const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+            const mimetype = file.mimetype.startsWith('image/');
+
+            if (mimetype || extname) {
                 return cb(null, true);
             } else {
                 cb(new Error('Only image files are allowed for cover!'));
@@ -318,6 +387,8 @@ app.get('/api/auth/me', isAuthenticated, (req, res) => {
 // Get all songs
 app.get('/api/songs', (req, res) => {
     const language = req.query.language;
+    const limit = parseInt(req.query.limit) || null; // PERFORMANCE: Support pagination
+    const offset = parseInt(req.query.offset) || 0;
 
     let sql = 'SELECT * FROM songs';
     let params = [];
@@ -328,6 +399,12 @@ app.get('/api/songs', (req, res) => {
     }
 
     sql += ' ORDER BY created_at DESC';
+
+    // PERFORMANCE: Add LIMIT/OFFSET for pagination
+    if (limit) {
+        sql += ' LIMIT ? OFFSET ?';
+        params.push(limit, offset);
+    }
 
     db.all(sql, params, (err, rows) => {
         if (err) {
@@ -550,6 +627,34 @@ app.delete('/api/admin/quick-picks/:id', (req, res) => {
     );
 });
 
+// Reorder quick picks
+app.put('/api/admin/quick-picks/reorder', (req, res) => {
+    const { songIds } = req.body;
+
+    if (!songIds || !Array.isArray(songIds)) {
+        res.status(400).json({ error: 'songIds array is required' });
+        return;
+    }
+
+    // Update position for each song
+    const updates = songIds.map((songId, index) => {
+        return new Promise((resolve, reject) => {
+            db.run(
+                'UPDATE quick_picks SET position = ? WHERE song_id = ?',
+                [index, songId],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    });
+
+    Promise.all(updates)
+        .then(() => res.json({ success: true }))
+        .catch(err => res.status(500).json({ error: err.message }));
+});
+
 // ==================== TRENDING SONGS ENDPOINTS ====================
 
 // Get trending songs (ONLY admin selected, no auto-fill)
@@ -630,6 +735,34 @@ app.delete('/api/admin/trending/:id', (req, res) => {
             res.json({ success: true, deleted: this.changes });
         }
     );
+});
+
+// Reorder trending songs
+app.put('/api/admin/trending/reorder', (req, res) => {
+    const { songIds } = req.body;
+
+    if (!songIds || !Array.isArray(songIds)) {
+        res.status(400).json({ error: 'songIds array is required' });
+        return;
+    }
+
+    // Update position for each song
+    const updates = songIds.map((songId, index) => {
+        return new Promise((resolve, reject) => {
+            db.run(
+                'UPDATE trending_songs SET position = ? WHERE song_id = ?',
+                [index, songId],
+                (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+    });
+
+    Promise.all(updates)
+        .then(() => res.json({ success: true }))
+        .catch(err => res.status(500).json({ error: err.message }));
 });
 
 // ==================== CUSTOM SECTIONS ENDPOINTS ====================
@@ -950,6 +1083,94 @@ app.put('/api/admin/albums/:language/reorder', (req, res) => {
         .catch(err => res.status(500).json({ error: err.message }));
 });
 
+// Update album (name, cover) - Admin only
+app.put('/api/admin/albums/:id', upload.single('cover'), (req, res) => {
+    const albumId = req.params.id;
+    const { name, language } = req.body;
+
+    let coverImage = req.body.cover_image;
+    if (req.file && req.file.location) {
+        coverImage = req.file.location;
+    }
+
+    const updates = [];
+    const params = [];
+
+    if (name) {
+        updates.push('name = ?');
+        params.push(name);
+    }
+    if (language) {
+        updates.push('language = ?');
+        params.push(language);
+    }
+    if (coverImage) {
+        updates.push('cover_image = ?');
+        params.push(coverImage);
+    }
+
+    if (updates.length === 0) {
+        return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    params.push(albumId);
+    const sql = `UPDATE albums SET ${updates.join(', ')} WHERE id = ?`;
+
+    db.run(sql, params, function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// Update song cover - Admin only
+app.put('/api/admin/songs/:songId/cover', upload.single('cover'), (req, res) => {
+    const { songId } = req.params;
+
+    if (!req.file || !req.file.location) {
+        return res.status(400).json({ error: 'Cover image required' });
+    }
+
+    db.run('UPDATE songs SET cover_image = ? WHERE id = ?', [req.file.location, songId], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, cover_image: req.file.location });
+    });
+});
+
+// Add song to album - Admin only
+app.put('/api/admin/songs/:songId/album', (req, res) => {
+    const { songId } = req.params;
+    const { album_id } = req.body;
+
+    db.run('UPDATE songs SET album_id = ? WHERE id = ?', [album_id, songId], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// Remove song from album - Admin only
+app.delete('/api/admin/albums/:albumId/songs/:songId', (req, res) => {
+    const { songId } = req.params;
+
+    db.run('UPDATE songs SET album_id = NULL WHERE id = ?', [songId], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
+});
+
+// Delete album - Admin only
+app.delete('/api/admin/albums/:id', (req, res) => {
+    const albumId = req.params.id;
+
+    db.run('UPDATE songs SET album_id = NULL WHERE album_id = ?', [albumId], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        db.run('DELETE FROM albums WHERE id = ?', [albumId], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+        });
+    });
+});
+
 // ==================== END ALBUM MANAGEMENT ENDPOINTS ====================
 
 // Get single song
@@ -1067,78 +1288,112 @@ app.put('/api/admin/songs/:id', upload.fields([
     });
 });
 
-// Upload new song
-app.post('/api/upload', isAuthenticated, upload.fields([
+// Upload new song with AUTO-OPTIMIZATION
+app.post('/api/upload', isAuthenticated, uploadLocal.fields([
     { name: 'audio', maxCount: 1 },
     { name: 'cover', maxCount: 1 }
-]), (req, res) => {
-    if (!req.files || !req.files.audio) {
-        return res.status(400).json({ error: 'No audio file uploaded' });
-    }
-
-    const {
-        title,
-        singer,
-        lyricist,
-        music_director,
-        composer,
-        company,
-        lyrics,
-        language
-    } = req.body;
-
-    if (!title || !singer) {
-        return res.status(400).json({ error: 'Title and Singer are required' });
-    }
-
-    // Get S3 URLs from multer-s3
-    const audioFile = req.files.audio[0].location; // S3 URL
-    const coverImage = req.files.cover ? req.files.cover[0].location : null;
-    const userId = req.session.userId; // Get user ID from session
-
-    console.log('📤 Uploading new song:', title, 'by', singer);
-
-    const sql = `INSERT INTO songs (
-        title, singer, lyricist, music_director, composer,
-        company, lyrics, audio_file, cover_image, language, user_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    db.run(sql, [
-        title,
-        singer,
-        lyricist || '',
-        music_director || '',
-        composer || '',
-        company || '',
-        lyrics || '',
-        audioFile,
-        coverImage,
-        language || 'Hindi',
-        userId
-    ], function(err) {
-        if (err) {
-            console.error('❌ Database insert error:', err);
-            return res.status(500).json({ error: err.message });
+]), async (req, res) => {
+    try {
+        if (!req.files || !req.files.audio) {
+            return res.status(400).json({ error: 'No audio file uploaded' });
         }
 
-        res.json({
-            success: true,
-            message: 'Song uploaded successfully!',
-            songId: this.lastID,
-            song: {
-                id: this.lastID,
-                title,
-                singer,
-                music_director,
-                composer,
-                company,
-                lyrics,
-                audio_file: audioFile,
-                cover_image: coverImage,
-                user_id: userId
+        const {
+            title,
+            singer,
+            lyricist,
+            music_director,
+            composer,
+            company,
+            lyrics,
+            language
+        } = req.body;
+
+        if (!title || !singer) {
+            return res.status(400).json({ error: 'Title and Singer are required' });
+        }
+
+        const userId = req.session.userId;
+        console.log('📤 Uploading new song with optimization:', title, 'by', singer);
+
+        // Get local file paths
+        const audioFile = req.files.audio[0];
+        const coverFile = req.files.cover ? req.files.cover[0] : null;
+
+        // Optimize and upload to S3
+        let imageVersions = null;
+        if (coverFile) {
+            console.log('🖼️  Optimizing cover image...');
+            imageVersions = await optimizeAndUploadImage(
+                coverFile.path,
+                `covers/${audioFile.filename}`
+            );
+            // Cleanup local file
+            fs.unlinkSync(coverFile.path);
+        }
+
+        console.log('🎵 Optimizing audio file...');
+        const audioVersions = await transcodeAndUploadAudio(
+            audioFile.path,
+            `songs/${audioFile.filename}`
+        );
+        // Cleanup local file
+        fs.unlinkSync(audioFile.path);
+
+        console.log('✅ Optimization complete! Saving to database...');
+
+        // Insert into database with optimized URLs
+        const sql = `INSERT INTO songs (
+            title, singer, lyricist, music_director, composer,
+            company, lyrics, language, user_id,
+            audio_file, audio_file_128, audio_file_256,
+            cover_image, cover_thumb, cover_mobile, cover_desktop
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        db.run(sql, [
+            title,
+            singer,
+            lyricist || '',
+            music_director || '',
+            composer || '',
+            company || '',
+            lyrics || '',
+            language || 'Hindi',
+            userId,
+            audioVersions.standard, // Use optimized as primary
+            audioVersions.standard, // 128 kbps AAC
+            audioVersions.high,     // 256 kbps AAC
+            imageVersions ? imageVersions.mobile : null, // Use mobile as primary
+            imageVersions ? imageVersions.thumbnail : null,
+            imageVersions ? imageVersions.mobile : null,
+            imageVersions ? imageVersions.desktop : null
+        ], function(err) {
+            if (err) {
+                console.error('❌ Database insert error:', err);
+                return res.status(500).json({ error: err.message });
             }
+
+            res.json({
+                success: true,
+                message: 'Song uploaded and optimized successfully!',
+                songId: this.lastID,
+                song: {
+                    id: this.lastID,
+                    title,
+                    singer,
+                    music_director,
+                    composer,
+                    audio_file_128: audioVersions.standard,
+                    cover_mobile: imageVersions ? imageVersions.mobile : null,
+                    user_id: userId
+                }
+            });
         });
-    });
+
+    } catch (error) {
+        console.error('❌ Upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Update play count
