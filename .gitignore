@@ -47,3 +47,11 @@ HR2/Audio_Files/*.wav
 HR2/Audio_Files/*.crdownload
 *.db
 temp_*/
+
+# Large audio files
+HR2/Audio_Files/*.wav
+HR2/Audio_Files/*.crdownload
+*.db
+*.tar.gz
+stage_music.db
+stage-music-deploy.tar.gz
