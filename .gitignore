@@ -43,3 +43,7 @@ Thumbs.db
 *.temp
 .git-credentials
 push.sh
+HR2/Audio_Files/*.wav
+HR2/Audio_Files/*.crdownload
+*.db
+temp_*/
