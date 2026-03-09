@@ -832,7 +832,7 @@ window.playSong = function(index) {
     // Set audio source
     audioPlayer.src = song.audio_file;
     audioPlayer.load();
-    audioPlayer.play();
+    audioPlayer.play().catch(e => console.log("Play failed:", e));
     isPlaying = true;
 
     // Update mini player
@@ -1092,7 +1092,7 @@ function togglePlayPause() {
         miniPlayBtn.innerHTML = '▶️';
         playBtnLarge.innerHTML = '<span class="control-icon">▶️</span>';
     } else {
-        audioPlayer.play();
+        audioPlayer.play().catch(e => console.log("Play failed:", e));
         miniPlayBtn.innerHTML = '⏸️';
         playBtnLarge.innerHTML = '<span class="control-icon">⏸️</span>';
     }
@@ -1205,7 +1205,7 @@ function setupEventListeners() {
     audioPlayer.addEventListener('ended', () => {
         if (repeatMode === 'one') {
             audioPlayer.currentTime = 0;
-            audioPlayer.play();
+            audioPlayer.play().catch(e => console.log("Play failed:", e));
         } else if (repeatMode === 'all' || currentSongIndex < allSongs.length - 1) {
             playNext();
         } else {
@@ -1574,3 +1574,47 @@ function filterCategorySongs() {
     });
 }
 
+
+// ========================================
+// AUDIO LOADING INDICATORS
+// ========================================
+
+function showAudioLoading() {
+    const overlay = document.getElementById('audio-loading');
+    if (overlay) {
+        overlay.classList.add('active');
+        console.log('⏳ Loading audio...');
+    }
+}
+
+function hideAudioLoading() {
+    const overlay = document.getElementById('audio-loading');
+    if (overlay) {
+        overlay.classList.remove('active');
+        console.log('✅ Audio loaded');
+    }
+}
+
+// Audio loading event listeners
+const audioPlayer = document.getElementById('audio-player');
+if (audioPlayer) {
+    audioPlayer.addEventListener('loadstart', () => {
+        showAudioLoading();
+    });
+
+    audioPlayer.addEventListener('canplay', () => {
+        hideAudioLoading();
+    });
+
+    audioPlayer.addEventListener('playing', () => {
+        hideAudioLoading();
+    });
+
+    audioPlayer.addEventListener('waiting', () => {
+        showAudioLoading();
+    });
+
+    audioPlayer.addEventListener('error', () => {
+        hideAudioLoading();
+    });
+}

@@ -592,9 +592,15 @@
         </div>
     </main>
 
+    <!-- Audio Loading Indicator -->
+    <div class="audio-loading-overlay" id="audio-loading">
+        <div class="spinner"></div>
+        <div class="text">Loading song...</div>
+    </div>
+
     <!-- Mini Player (Bottom Bar) -->
     <div class="mini-player" id="mini-player" style="display: none;">
-        <audio id="audio-player"></audio>
+        <audio id="audio-player" preload="auto"></audio>
 
         <div class="mini-player-content">
             <div class="mini-player-left">

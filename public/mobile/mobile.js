@@ -62,11 +62,21 @@ const minimizeBtn = document.getElementById('minimize-btn');
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Version check
+    console.log('🚀 Stage Music v1.3 - Navigation Fixed');
+    console.log('📅', new Date().toISOString());
+    // Register Service Worker for offline support & caching
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/mobile/sw.js')
+            .catch(err => console.log('SW registration failed:', err));
+    }
+
     loadSongs();
     setupEventListeners();
     setupBottomNavigation();
     initializeMediaSession(); // Initialize lock screen controls
     setupNavigationHistory(); // Setup browser back button handling
+    preloadFirstSong(); // Preload first song for instant play
 });
 
 // ========================================
@@ -85,30 +95,41 @@ function imgTag(src, alt, className, eager = false) {
 
 async function loadSongs() {
     try {
-        // ULTRA FAST FOR ANDROID: Load only 15 songs initially
-        const cacheTime = Math.floor(Date.now() / 300000);
-        const response = await fetch(`/api/songs?limit=15&_t=${cacheTime}`, {
-            cache: 'default'
-        });
-
-        const data = await response.json();
-        allSongs = data.songs || [];
-
-        // Render ONLY Quick Picks first (minimum content)
+        // STEP 1: Load ONLY Quick Picks (9 songs) - FASTEST!
         await renderQuickPicks();
 
-        // Hide loading screen ASAP
+        // STEP 2: Hide loading screen IMMEDIATELY
         hideLoadingScreen();
 
-        // Render all content immediately (no artificial delays)
-        renderTop10();
-        renderCustomSections();
-        renderRegionalHits();
-        renderAlbums();
-        renderCategories();
+        // STEP 3: Load first batch of songs in background (non-blocking)
+        setTimeout(async () => {
+            const cacheTime = Math.floor(Date.now() / 300000);
+            const response = await fetch(`/api/songs?limit=15&lite=true&_t=${cacheTime}`, {
+                cache: 'default'
+            });
+            const data = await response.json();
+            allSongs = data.songs || [];
 
-        // Load remaining songs in background (minimal delay)
-        setTimeout(() => loadRemaingSongs(), 50);
+            // Render Top 10 first (most important)
+            renderTop10();
+        }, 100);
+
+        // STEP 4: Load remaining sections progressively
+        setTimeout(() => {
+            renderCustomSections();
+        }, 300);
+
+        setTimeout(() => {
+            renderRegionalHits();
+        }, 500);
+
+        setTimeout(() => {
+            renderAlbums();
+            renderCategories();
+        }, 800);
+
+        // STEP 5: Load ALL remaining songs last (background)
+        setTimeout(() => loadRemaingSongs(), 1500);
 
     } catch (error) {
         console.error('Error loading songs:', error);
@@ -116,10 +137,42 @@ async function loadSongs() {
     }
 }
 
+
+
+// ========================================
+// PRELOAD FIRST SONG FOR FAST PLAY
+// ========================================
+
+function preloadFirstSong() {
+    // Wait a bit for page to load
+    setTimeout(() => {
+        if (allSongs.length > 0) {
+            const firstSong = allSongs[0];
+            const audioUrl = firstSong.audio_file_128 || firstSong.audio_file;
+            
+            console.log('🚀 Preloading first song for instant play:', firstSong.title);
+            
+            // Create a hidden audio element to preload
+            const preloadAudio = new Audio();
+            preloadAudio.preload = 'auto';
+            preloadAudio.src = audioUrl;
+            
+            // Start loading but don't play
+            preloadAudio.load();
+            
+            // Clean up after it's loaded
+            preloadAudio.addEventListener('canplaythrough', () => {
+                console.log('✅ First song preloaded and ready');
+                preloadAudio.remove();
+            });
+        }
+    }, 2000); // Wait 2 seconds after page load
+}
+
 async function loadRemaingSongs() {
     try {
         const cacheTime = Math.floor(Date.now() / 300000);
-        const response = await fetch(`/api/songs?offset=15&_t=${cacheTime}`, {
+        const response = await fetch(`/api/songs?offset=15&lite=true&_t=${cacheTime}`, {
             cache: 'default'
         });
         const data = await response.json();
@@ -152,33 +205,63 @@ function hideLoadingScreen() {
 // RENDER SECTIONS
 // ========================================
 
+function renderQuickPicksHTML(picks, grid) {
+    grid.innerHTML = picks.map((song, index) => `
+        <div class="quick-pick-card" onclick="playFromQuickPicks(${song.id})">
+            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}"
+                 alt="${song.title}"
+                 class="quick-pick-cover"
+                 loading="${index < 3 ? 'eager' : 'lazy'}"
+                 decoding="async">
+            <div class="quick-pick-overlay">
+                <div class="quick-pick-title">${song.title}</div>
+                <div class="quick-pick-artist">${song.singer || 'Unknown'}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Store for queue
+    window.quickPicksQueue = {
+        songs: picks,
+        context: { type: 'section', name: 'Quick Picks', language: null }
+    };
+}
+
 async function renderQuickPicks() {
     const grid = document.getElementById('quick-picks-grid');
 
+    // INSTANT LOAD: Show cached data immediately (for repeat visitors)
+    const cached = localStorage.getItem('quickPicks');
+    if (cached) {
+        try {
+            const picks = JSON.parse(cached);
+            renderQuickPicksHTML(picks, grid);
+        } catch (e) {
+            console.error('Cache parse error:', e);
+        }
+    }
+
     try {
-        // Fetch Quick Picks (sorted by plays) with caching
+        // Fetch fresh data in background (stale-while-revalidate)
         const response = await fetch(`/api/quick-picks`, {
-            cache: 'default'  // Allow caching
+            cache: 'default'
         });
 
         const data = await response.json();
         const picks = data.songs || allSongs.slice(0, 9);
+
+        // Update cache for next visit
+        localStorage.setItem('quickPicks', JSON.stringify(picks));
+        localStorage.setItem('quickPicksTime', Date.now());
+
+        // Re-render with fresh data
+        renderQuickPicksHTML(picks, grid);
 
         // Store for queue
         window.quickPicksQueue = {
             songs: picks,
             context: { type: 'section', name: 'Quick Picks', language: null }
         };
-
-        grid.innerHTML = picks.map((song, index) => `
-            <div class="quick-pick-card" onclick="playFromQuickPicks(${song.id})">
-                <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="quick-pick-cover" loading="${index < 3 ? 'eager' : 'lazy'}">
-                <div class="quick-pick-overlay">
-                    <div class="quick-pick-title">${song.title}</div>
-                    <div class="quick-pick-artist">${song.singer || 'Unknown'}</div>
-                </div>
-            </div>
-        `).join('');
     } catch (error) {
         console.error('Error loading quick picks:', error);
         // Fallback
@@ -189,7 +272,7 @@ async function renderQuickPicks() {
         };
         grid.innerHTML = picks.map((song, index) => `
             <div class="quick-pick-card" onclick="playFromQuickPicks(${song.id})">
-                <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="quick-pick-cover">
+                <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="quick-pick-cover">
                 <div class="quick-pick-overlay">
                     <div class="quick-pick-title">${song.title}</div>
                     <div class="quick-pick-artist">${song.singer || 'Unknown'}</div>
@@ -222,7 +305,7 @@ async function renderTop10() {
         // Vertical list with horizontal cards
         trendingGrid.innerHTML = allTrending.map(song => `
             <div class="trending-card" onclick="playFromTrending(${song.id})">
-                <img src="${(song.cover_mobile || song.cover_image)}" alt="${escapeHtml(song.title)}" class="trending-cover">
+                <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${escapeHtml(song.title)}" class="trending-cover">
                 <div style="flex: 1; min-width: 0;">
                     <div class="trending-title">${escapeHtml(song.title)}</div>
                     <div class="trending-artist">${escapeHtml(song.singer || 'Unknown')}</div>
@@ -244,7 +327,7 @@ async function renderTop10() {
         };
         trendingGrid.innerHTML = allTrending.map(song => `
             <div class="trending-card" onclick="playFromTrending(${song.id})">
-                <img src="${(song.cover_mobile || song.cover_image)}" alt="${escapeHtml(song.title)}" class="trending-cover">
+                <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${escapeHtml(song.title)}" class="trending-cover">
                 <div style="flex: 1; min-width: 0;">
                     <div class="trending-title">${escapeHtml(song.title)}</div>
                     <div class="trending-artist">${escapeHtml(song.singer || 'Unknown')}</div>
@@ -483,7 +566,7 @@ function renderRecentlyPlayed() {
 
     scroll.innerHTML = recent.map(song => `
         <div class="song-card" onclick="playSong(${song.id})">
-            <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="card-cover">
+            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="card-cover">
             <div class="card-info">
                 <div class="card-title">${song.title}</div>
                 <div class="card-subtitle">${song.singer || 'Unknown'}</div>
@@ -607,7 +690,7 @@ function renderUpNext() {
         if (remainingSongs.length < 10 && queueContext && queueContext.language) {
             upNextList.innerHTML = nextSongs.map(song => `
                 <div class="up-next-item" onclick="playSong(${song.id})">
-                    <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="up-next-cover">
+                    <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="up-next-cover">
                     <div class="up-next-info">
                         <div class="up-next-song-title">${song.title}</div>
                         <div class="up-next-artist">${song.singer || 'Unknown'}</div>
@@ -633,7 +716,7 @@ function renderUpNext() {
 
     upNextList.innerHTML = nextSongs.map(song => `
         <div class="up-next-item" onclick="playSong(${song.id})">
-            <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="up-next-cover">
+            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="up-next-cover">
             <div class="up-next-info">
                 <div class="up-next-song-title">${song.title}</div>
                 <div class="up-next-artist">${song.singer || 'Unknown'}</div>
@@ -715,10 +798,32 @@ function playSong(songId) {
         '3min': false
     };
 
+    // Show loading indicators
+    showAudioLoading();
+
     // Update audio source (use optimized version if available)
     audioPlayer.src = song.audio_file_128 || song.audio_file;
-    audioPlayer.play();
-    isPlaying = true;
+
+    // Android-compatible play with error handling
+    const playPromise = audioPlayer.play();
+    if (playPromise !== undefined) {
+        playPromise
+            .then(() => {
+                isPlaying = true;
+                console.log('✅ Playing:', song.title);
+                hideAudioLoading(); // Hide loader when playing
+            })
+            .catch(error => {
+                console.error('❌ Play failed:', error);
+                isPlaying = false;
+                hideAudioLoading(); // Hide loader on error
+                // Show error to user
+                alert('Cannot play song. Please tap play button.');
+            });
+    } else {
+        isPlaying = true;
+        hideAudioLoading();
+    }
 
     // Track play history
     trackPlayHistory(song.id);
@@ -745,14 +850,14 @@ function playSong(songId) {
     }
 
     // Update mini player
-    miniCover.src = (song.cover_mobile || song.cover_image);
+    miniCover.src = (song.cover_thumb || song.cover_mobile || song.cover_image);
     miniTitle.textContent = song.title;
     miniArtist.textContent = song.singer || 'Unknown';
     miniPlayer.style.display = 'flex';
     updatePlayButton(true);
 
     // Update full player
-    albumArt.src = (song.cover_mobile || song.cover_image);
+    albumArt.src = (song.cover_thumb || song.cover_mobile || song.cover_image);
     songTitle.textContent = song.title;
     songArtist.textContent = song.singer || 'Unknown';
 
@@ -761,6 +866,50 @@ function playSong(songId) {
 
     // Update up next queue
     renderUpNext();
+}
+
+
+
+// ========================================
+// AUDIO LOADING INDICATORS
+// ========================================
+
+function showAudioLoading() {
+    // Show loading overlay
+    const overlay = document.getElementById('audio-loading');
+    if (overlay) overlay.classList.add('active');
+
+    // Show spinner in play buttons
+    const miniBtn = document.getElementById('mini-play-btn');
+    const miniSpinner = document.getElementById('mini-spinner');
+    if (miniBtn) miniBtn.classList.add('loading');
+    if (miniSpinner) miniSpinner.classList.add('active');
+
+    const fullBtn = document.getElementById('play-btn-large');
+    const fullSpinner = document.getElementById('full-spinner');
+    if (fullBtn) fullBtn.classList.add('loading');
+    if (fullSpinner) fullSpinner.classList.add('active');
+
+    console.log('⏳ Loading audio...');
+}
+
+function hideAudioLoading() {
+    // Hide loading overlay
+    const overlay = document.getElementById('audio-loading');
+    if (overlay) overlay.classList.remove('active');
+
+    // Hide spinner in play buttons
+    const miniBtn = document.getElementById('mini-play-btn');
+    const miniSpinner = document.getElementById('mini-spinner');
+    if (miniBtn) miniBtn.classList.remove('loading');
+    if (miniSpinner) miniSpinner.classList.remove('active');
+
+    const fullBtn = document.getElementById('play-btn-large');
+    const fullSpinner = document.getElementById('full-spinner');
+    if (fullBtn) fullBtn.classList.remove('loading');
+    if (fullSpinner) fullSpinner.classList.remove('active');
+
+    console.log('✅ Audio loaded');
 }
 
 function togglePlay() {
@@ -857,7 +1006,7 @@ async function playNext() {
     if (repeatMode === 'one') {
         console.log('🔂 Repeat One: Replaying', currentSong.title);
         audioPlayer.currentTime = 0;
-        audioPlayer.play();
+        audioPlayer.play().catch(e => console.log('Play failed:', e));
         return;
     }
 
@@ -1091,6 +1240,33 @@ function setupEventListeners() {
     setupAuthListeners();
 
     // Audio Events
+    
+    // Audio loading events
+    audioPlayer.addEventListener('loadstart', () => {
+        console.log('📥 Loading started...');
+        showAudioLoading();
+    });
+
+    audioPlayer.addEventListener('canplay', () => {
+        console.log('✅ Can play - hiding loader');
+        hideAudioLoading();
+    });
+
+    audioPlayer.addEventListener('playing', () => {
+        console.log('▶️ Playing - hiding loader');
+        hideAudioLoading();
+    });
+
+    audioPlayer.addEventListener('waiting', () => {
+        console.log('⏳ Buffering...');
+        showAudioLoading();
+    });
+
+    audioPlayer.addEventListener('error', () => {
+        console.log('❌ Audio error');
+        hideAudioLoading();
+    });
+
     audioPlayer.addEventListener('timeupdate', updateProgress);
     audioPlayer.addEventListener('ended', () => {
         // Track song completion
@@ -1220,7 +1396,7 @@ function setupProgressBarSeek() {
 
         // Resume playback if it was playing before
         if (wasPlaying) {
-            audioPlayer.play();
+            audioPlayer.play().catch(e => console.log('Play failed:', e));
         }
     }
 
@@ -1252,6 +1428,9 @@ function showSearchView() {
     const searchView = document.getElementById('search-view');
     searchView.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // Push to navigation history
+    pushNavigationState('search');
 
     // Focus on search input
     setTimeout(() => {
@@ -1332,7 +1511,7 @@ function showSearchResults(results) {
 
     resultsList.innerHTML = results.map(song => `
         <div class="search-result-item" onclick="playSong(${song.id})">
-            <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="search-result-cover">
+            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="search-result-cover">
             <div class="search-result-info">
                 <div class="search-result-title">${song.title}</div>
                 <div class="search-result-artist">${song.singer || 'Unknown'}</div>
@@ -1359,9 +1538,12 @@ function setupSearchListeners() {
         searchBtn.addEventListener('click', showSearchView);
     }
 
-    // Close search button
+    // Close search button - Use browser back
     if (closeSearchBtn) {
-        closeSearchBtn.addEventListener('click', hideSearchView);
+        closeSearchBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.history.back();
+        });
     }
 
     // Search input with debounce
@@ -1420,6 +1602,9 @@ async function showLibraryView() {
     const libraryView = document.getElementById('library-view');
     libraryView.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // Push to navigation history
+    pushNavigationState('library');
 
     // Check authentication
     await checkAuthAndLoadPlaylists();
@@ -1536,7 +1721,7 @@ function showPlaylistDetailView(playlist, songs) {
                 <div class="playlist-songs-header">Songs</div>
                 ${songs.map(song => `
                     <div class="playlist-song-item">
-                        <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="playlist-song-cover" onclick="playSong(${song.id})">
+                        <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="playlist-song-cover" onclick="playSong(${song.id})">
                         <div class="playlist-song-info" onclick="playSong(${song.id})">
                             <div class="playlist-song-title">${song.title}</div>
                             <div class="playlist-song-artist">${song.singer || 'Unknown'}</div>
@@ -1830,14 +2015,9 @@ function setupPlaylistListeners() {
     // Back from library
     const backFromLibrary = document.getElementById('back-from-library');
     if (backFromLibrary) {
-        backFromLibrary.addEventListener('click', () => {
-            hideLibraryView();
-            // Switch to home
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(nav => nav.classList.remove('active'));
-            const homeNav = document.querySelector('[data-page="home"]');
-            if (homeNav) homeNav.classList.add('active');
-            switchPage('home');
+        backFromLibrary.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.history.back();
         });
     }
 
@@ -1857,6 +2037,9 @@ async function showProfileView() {
     const profileView = document.getElementById('profile-view');
     profileView.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // Push to navigation history
+    pushNavigationState('profile');
 
     // Track profile viewed
     if (window.tracker) {
@@ -1931,7 +2114,7 @@ async function loadRecentlyPlayed() {
                 section.style.display = 'block';
                 scroll.innerHTML = songs.map(song => `
                     <div class="song-card" onclick="playSong(${song.id})">
-                        <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="card-cover">
+                        <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="card-cover">
                         <div class="card-info">
                             <div class="card-title">${song.title}</div>
                             <div class="card-subtitle">${song.singer || 'Unknown'}</div>
@@ -2202,17 +2385,12 @@ function setupAuthListeners() {
         registerForm.addEventListener('submit', handleMobileRegister);
     }
 
-    // Back from profile
+    // Back from profile - Use browser back
     const backFromProfile = document.getElementById('back-from-profile');
     if (backFromProfile) {
-        backFromProfile.addEventListener('click', () => {
-            hideProfileView();
-            // Switch to home
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(nav => nav.classList.remove('active'));
-            const homeNav = document.querySelector('[data-page="home"]');
-            if (homeNav) homeNav.classList.add('active');
-            switchPage('home');
+        backFromProfile.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.history.back();
         });
     }
 }
@@ -2296,22 +2474,22 @@ function updateMediaSession(song) {
             album: song.album || 'Stage Music',
             artwork: [
                 {
-                    src: (song.cover_mobile || song.cover_image),
+                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
                     sizes: '512x512',
                     type: 'image/jpeg'
                 },
                 {
-                    src: (song.cover_mobile || song.cover_image),
+                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
                     sizes: '256x256',
                     type: 'image/jpeg'
                 },
                 {
-                    src: (song.cover_mobile || song.cover_image),
+                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
                     sizes: '128x128',
                     type: 'image/jpeg'
                 },
                 {
-                    src: (song.cover_mobile || song.cover_image),
+                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
                     sizes: '96x96',
                     type: 'image/jpeg'
                 }
@@ -2487,7 +2665,7 @@ function showCategoryView(categoryName, songs, languageOverride = null, contextT
             <div class="category-songs-list">
                 ${songs.map((song, index) => `
                     <div class="category-song-item" onclick="playSongFromCategoryView(${song.id}, ${index})">
-                        <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="category-song-cover">
+                        <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="category-song-cover">
                         <div class="category-song-info">
                             <div class="category-song-title">${song.title}</div>
                             <div class="category-song-artist">${song.singer || 'Unknown'}</div>
@@ -2549,17 +2727,50 @@ function setupNavigationHistory() {
 
         isNavigating = true;
 
+        // CRITICAL for Android: Stop event propagation
+        if (event) {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        }
+
         // Check what's currently visible
         const isPlayerOpen = fullPlayer.classList.contains('active');
-        const isCategoryOpen = document.getElementById('category-view').classList.contains('active');
+        const isCategoryOpen = document.getElementById('category-view')?.classList.contains('active');
+        const isSearchOpen = document.getElementById('search-view')?.classList.contains('active');
+        const isLibraryOpen = document.getElementById('library-view')?.classList.contains('active');
+        const isProfileOpen = document.getElementById('profile-view')?.classList.contains('active');
 
-        console.log('📱 Player:', isPlayerOpen, 'Category:', isCategoryOpen);
+        console.log('📱 Player:', isPlayerOpen, 'Category:', isCategoryOpen, 'Search:', isSearchOpen, 'Library:', isLibraryOpen, 'Profile:', isProfileOpen);
 
         if (isPlayerOpen) {
-            // Close player, stay on current page
+            // Close player, keep underlying view open
             console.log('→ Closing player');
             fullPlayer.classList.remove('active');
-            document.body.style.overflow = '';
+
+            // Check if there's a view underneath that needs overflow hidden
+            const hasUnderlyingView = isCategoryOpen || isSearchOpen || isLibraryOpen || isProfileOpen;
+            if (!hasUnderlyingView) {
+                document.body.style.overflow = ''; // Only reset if no view underneath
+            }
+
+            navigationStack.pop();
+        } else if (isSearchOpen) {
+            // Close search view, go back to home
+            console.log('→ Closing search');
+            hideSearchView();
+            updateBottomNav('home');
+            navigationStack.pop();
+        } else if (isLibraryOpen) {
+            // Close library view, go back to home
+            console.log('→ Closing library');
+            hideLibraryView();
+            updateBottomNav('home');
+            navigationStack.pop();
+        } else if (isProfileOpen) {
+            // Close profile view, go back to home
+            console.log('→ Closing profile');
+            hideProfileView();
+            updateBottomNav('home');
             navigationStack.pop();
         } else if (isCategoryOpen) {
             // Close category, go to home
@@ -2569,13 +2780,11 @@ function setupNavigationHistory() {
             document.body.style.overflow = '';
             navigationStack.pop();
         } else {
-            // On home - check if we're at the start marker
-            if (state && state.isStart) {
-                console.log('→ At start, push forward to stay in app');
-                history.pushState({ view: 'home', isStart: true }, '');
-            } else {
-                console.log('→ On home, no action');
-            }
+            // On home - ALWAYS stay in app (critical for Android)
+            console.log('→ On home, preventing app exit');
+            // Push forward to prevent exit
+            history.pushState({ view: 'home', isStart: true }, '');
+            navigationStack = ['home']; // Reset stack
         }
 
         setTimeout(() => { isNavigating = false; }, 150);
@@ -2589,6 +2798,18 @@ function pushNavigationState(view, data = {}) {
     const state = { view, data, stack: [...navigationStack] };
     history.pushState(state, '');
     console.log('📍 Pushed state:', view, 'Stack:', navigationStack);
+}
+
+function updateBottomNav(page) {
+    // Update bottom navigation active state
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(nav => {
+        if (nav.dataset.page === page) {
+            nav.classList.add('active');
+        } else {
+            nav.classList.remove('active');
+        }
+    });
 }
 
 // ========================================
