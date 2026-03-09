@@ -86,34 +86,29 @@ function imgTag(src, alt, className, eager = false) {
 async function loadSongs() {
     try {
         // ULTRA FAST FOR ANDROID: Load only 15 songs initially
-        const cacheTime = Math.floor(Date.now() / 300000); // 5 minutes
+        const cacheTime = Math.floor(Date.now() / 300000);
         const response = await fetch(`/api/songs?limit=15&_t=${cacheTime}`, {
             cache: 'default'
         });
+
         const data = await response.json();
         allSongs = data.songs || [];
 
-        console.log('⚡ Initial songs loaded:', allSongs.length);
-
         // Render ONLY Quick Picks first (minimum content)
-        renderQuickPicks();
+        await renderQuickPicks();
 
         // Hide loading screen ASAP
         hideLoadingScreen();
 
-        // Render other critical content with delay
-        setTimeout(() => renderTop10(), 100);
+        // Render all content immediately (no artificial delays)
+        renderTop10();
+        renderCustomSections();
+        renderRegionalHits();
+        renderAlbums();
+        renderCategories();
 
-        // Load remaining songs in background
-        setTimeout(() => loadRemaingSongs(), 500);
-
-        // Defer non-critical content more aggressively
-        setTimeout(() => renderCustomSections(), 1000);
-        setTimeout(() => renderRegionalHits(), 1500);
-        setTimeout(() => {
-            renderAlbums();
-            renderCategories();
-        }, 2000);
+        // Load remaining songs in background (minimal delay)
+        setTimeout(() => loadRemaingSongs(), 50);
 
     } catch (error) {
         console.error('Error loading songs:', error);
@@ -131,7 +126,6 @@ async function loadRemaingSongs() {
         const moreSongs = data.songs || [];
 
         allSongs = [...allSongs, ...moreSongs];
-        console.log('📊 All songs loaded:', allSongs.length);
 
         // Re-render sections with all songs
         renderCustomSections();
@@ -162,11 +156,11 @@ async function renderQuickPicks() {
     const grid = document.getElementById('quick-picks-grid');
 
     try {
-        // Fetch from new Quick Picks API with cache-busting
-        const response = await fetch(`/api/quick-picks?_t=${Date.now()}`, {
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache' }
+        // Fetch Quick Picks (sorted by plays) with caching
+        const response = await fetch(`/api/quick-picks`, {
+            cache: 'default'  // Allow caching
         });
+
         const data = await response.json();
         const picks = data.songs || allSongs.slice(0, 9);
 
@@ -178,7 +172,7 @@ async function renderQuickPicks() {
 
         grid.innerHTML = picks.map((song, index) => `
             <div class="quick-pick-card" onclick="playFromQuickPicks(${song.id})">
-                <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="quick-pick-cover">
+                <img src="${(song.cover_mobile || song.cover_image)}" alt="${song.title}" class="quick-pick-cover" loading="${index < 3 ? 'eager' : 'lazy'}">
                 <div class="quick-pick-overlay">
                     <div class="quick-pick-title">${song.title}</div>
                     <div class="quick-pick-artist">${song.singer || 'Unknown'}</div>
@@ -187,7 +181,7 @@ async function renderQuickPicks() {
         `).join('');
     } catch (error) {
         console.error('Error loading quick picks:', error);
-        // Fallback to first 9 songs
+        // Fallback
         const picks = allSongs.slice(0, 9);
         window.quickPicksQueue = {
             songs: picks,

@@ -113,8 +113,10 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 16px;
-            max-height: 500px;
+            max-height: 400px;
             overflow-y: auto;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
         }
 
         .song-item {
@@ -172,7 +174,12 @@
             font-weight: 600;
             font-size: 1em;
             transition: all 0.2s;
-            margin-top: 16px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 300px;
+            display: block;
+            position: relative;
+            z-index: 10;
         }
 
         .add-btn:hover {
@@ -184,6 +191,17 @@
             background: #6c757d;
             cursor: not-allowed;
             transform: none;
+            opacity: 0.6;
+        }
+
+        .add-btn:not(:disabled) {
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4); }
+            50% { box-shadow: 0 4px 20px rgba(40, 167, 69, 0.6); }
         }
 
         .info-box {
@@ -210,6 +228,124 @@
         .search-box:focus {
             outline: none;
             border-color: #e31e24;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 1.5em;
+            }
+
+            .page-subtitle {
+                font-size: 0.9em;
+            }
+
+            .section {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .section-title {
+                font-size: 1.2em;
+            }
+
+            .featured-item {
+                flex-wrap: wrap;
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .featured-rank {
+                width: 32px;
+                height: 32px;
+                font-size: 1em;
+            }
+
+            .featured-cover {
+                width: 50px;
+                height: 50px;
+            }
+
+            .featured-title {
+                font-size: 0.95em;
+            }
+
+            .featured-artist {
+                font-size: 0.85em;
+            }
+
+            .remove-btn {
+                padding: 10px 16px;
+                font-size: 0.9em;
+                width: 100%;
+                margin-top: 8px;
+            }
+
+            .songs-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 12px;
+                max-height: 350px;
+            }
+
+            .song-item {
+                padding: 10px;
+            }
+
+            .song-name {
+                font-size: 0.85em;
+            }
+
+            .song-artist {
+                font-size: 0.75em;
+            }
+
+            .add-btn {
+                padding: 16px 20px;
+                font-size: 1.1em;
+                max-width: 100%;
+                margin-top: 16px;
+            }
+
+            .search-box {
+                padding: 14px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .info-box {
+                padding: 12px;
+                font-size: 0.9em;
+            }
+
+            /* Make touch targets larger */
+            .song-item {
+                min-height: 44px;
+                cursor: pointer;
+            }
+
+            .icon-btn, .remove-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 1.3em;
+            }
+
+            .songs-grid {
+                grid-template-columns: repeat(2, 1fr);
+                max-height: 300px;
+            }
+
+            .featured-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .featured-info {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -247,10 +383,25 @@
             <div class="section">
                 <h2 class="section-title">➕ Add Song to Featured</h2>
                 <input type="text" class="search-box" id="search-box" placeholder="Search songs...">
+
+                <div style="margin: 20px 0; padding: 15px; background: #e8f5e9; border-radius: 8px; border: 2px dashed #28a745;">
+                    <p style="margin: 0; color: #2e7d32; font-weight: 600;">
+                        👇 Select a song below, then click the green button
+                    </p>
+                </div>
+
                 <div class="songs-grid" id="songs-grid">
                     <p style="color: #888;">Loading songs...</p>
                 </div>
-                <button class="add-btn" id="add-btn" disabled>Add Selected Song</button>
+
+                <div style="background: #f8f9fa; padding: 20px; margin-top: 20px; border-radius: 8px; text-align: center;">
+                    <button class="add-btn" id="add-btn" disabled>
+                        <span style="font-size: 1.2em;">➕</span> Add Selected Song to Featured
+                    </button>
+                    <p id="selection-status" style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                        Select a song to enable this button
+                    </p>
+                </div>
             </div>
         </main>
     </div>
@@ -317,7 +468,7 @@
 
             songsGrid.innerHTML = songs.map(song => `
                 <div class="song-item ${selectedSongId === song.id ? 'selected' : ''}"
-                     onclick="selectSong(${song.id})">
+                     onclick="selectSong(${song.id}, event)">
                     <img src="${song.cover_image || '/assets/default-cover.jpg'}"
                          class="song-cover"
                          onerror="this.src='/assets/default-cover.jpg'">
@@ -328,25 +479,47 @@
         }
 
         // Select song
-        function selectSong(songId) {
+        function selectSong(songId, event) {
             selectedSongId = songId;
             document.querySelectorAll('.song-item').forEach(item => {
                 item.classList.remove('selected');
             });
-            event.target.closest('.song-item').classList.add('selected');
+            event.currentTarget.classList.add('selected');
             document.getElementById('add-btn').disabled = false;
+
+            // Update status text
+            const selectedSong = allSongs.find(s => s.id === songId);
+            if (selectedSong) {
+                document.getElementById('selection-status').textContent =
+                    `Selected: ${selectedSong.title} - Ready to add!`;
+            }
         }
 
         // Add to featured
         async function addFeatured() {
-            if (!selectedSongId) return;
-
-            if (featuredSongs.length >= 10) {
-                alert('Maximum 10 featured songs allowed!');
+            if (!selectedSongId) {
+                alert('Please select a song first!');
                 return;
             }
 
+            // Check if already featured
+            if (featuredSongs.find(s => s.id === selectedSongId)) {
+                alert('This song is already featured!');
+                return;
+            }
+
+            if (featuredSongs.length >= 10) {
+                alert('Maximum 10 featured songs allowed! Remove a song first.');
+                return;
+            }
+
+            const btn = document.getElementById('add-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span style="font-size: 1.2em;">⏳</span> Adding...';
+            btn.disabled = true;
+
             try {
+                console.log('Adding song to featured:', selectedSongId);
                 const response = await fetch('/api/featured-songs', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -356,18 +529,26 @@
                     })
                 });
 
+                const data = await response.json();
+                console.log('Response:', data);
+
                 if (response.ok) {
-                    alert('Song added to featured!');
+                    alert('✅ Song added to featured successfully!');
                     selectedSongId = null;
-                    document.getElementById('add-btn').disabled = true;
+                    document.getElementById('selection-status').textContent = 'Select a song to enable this button';
                     await loadFeatured();
+                    await loadSongs(); // Refresh songs grid
                 } else {
-                    alert('Failed to add song');
+                    alert('❌ Failed to add song: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
                 }
             } catch (error) {
                 console.error('Error adding featured:', error);
-                alert('Error adding song');
+                alert('❌ Error: ' + error.message);
+                btn.disabled = false;
             }
+
+            btn.innerHTML = originalText;
         }
 
         // Remove from featured

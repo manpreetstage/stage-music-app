@@ -7,14 +7,35 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Stage Music - Mobile</title>
+
+    <!-- Preconnect to S3 for faster loading -->
+    <link rel="preconnect" href="https://stage-music-files.s3.ap-south-1.amazonaws.com">
+    <link rel="dns-prefetch" href="https://stage-music-files.s3.ap-south-1.amazonaws.com">
+
     <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
 
+    <!-- Loading Screen -->
+    <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;">
+        <div style="width: 60px; height: 60px; border: 4px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <div style="color: #fff; margin-top: 20px; font-size: 16px;">Loading Stage Music...</div>
+        <style>
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+    </div>
+
     <!-- Top Bar -->
     <header class="top-bar">
-        <img src="../assets/stage-logo.png" alt="Stage Music" class="logo">
+        <div class="logo-container">
+            <img src="../assets/stage-music-logo.png" alt="Stage Music" class="logo">
+        </div>
         <div class="spacer"></div>
+        <button class="icon-btn" id="refresh-btn" onclick="location.reload(true)" title="Refresh">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+        </button>
         <button class="icon-btn" id="search-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -25,74 +46,84 @@
     <!-- Main Content -->
     <main class="main-content" id="main-content">
 
-        <!-- Quick Picks Section -->
+        <!-- Top Ke Gaane Section -->
         <section class="section">
-            <h2 class="section-title">Quick Picks</h2>
+            <h2 class="section-title">Top Ke Gaane</h2>
             <div class="quick-picks-grid" id="quick-picks-grid">
                 <!-- Will be populated by JS -->
             </div>
         </section>
 
-        <!-- Regional Music (4 Big Cards) -->
+        <!-- Custom Sections (5 sections in horizontal scroll) -->
         <section class="section">
             <div class="section-header">
-                <h2 class="section-title">Regional Hits</h2>
+                <h2 class="section-title">🎵 Music Collections</h2>
             </div>
+            <div class="horizontal-scroll" id="custom-sections-scroll">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Regional Hits -->
+        <section class="section">
+            <h2 class="section-title">🌍 Regional Hits</h2>
             <div class="regional-grid">
-                <div class="regional-card haryanvi" onclick="viewCategory('haryanvi', 'Haryanvi Hits')">
-                    <div class="regional-icon">🎻</div>
-                    <div class="regional-name">Haryanvi</div>
+                <div class="regional-card" onclick="viewLanguageCategory('Haryanvi')" style="background-image: url('/assets/regional/Haryanvi.png')">
+                    <div class="regional-overlay"></div>
+                    <div class="regional-content">
+                        <h3 class="regional-name">Haryanvi</h3>
+                        <p class="regional-count" id="haryanvi-count">Loading...</p>
+                    </div>
                 </div>
-                <div class="regional-card rajasthani" onclick="viewCategory('rajasthani', 'Rajasthani Folk')">
-                    <div class="regional-icon">🎺</div>
-                    <div class="regional-name">Rajasthani</div>
+                <div class="regional-card" onclick="viewLanguageCategory('Rajasthani')" style="background-image: url('/assets/regional/Rajasthani.png')">
+                    <div class="regional-overlay"></div>
+                    <div class="regional-content">
+                        <h3 class="regional-name">Rajasthani</h3>
+                        <p class="regional-count" id="rajasthani-count">Loading...</p>
+                    </div>
                 </div>
-                <div class="regional-card bhojpuri" onclick="viewCategory('bhojpuri', 'Bhojpuri Dhamaka')">
-                    <div class="regional-icon">🎸</div>
-                    <div class="regional-name">Bhojpuri</div>
+                <div class="regional-card" onclick="viewLanguageCategory('Bhojpuri')" style="background-image: url('/assets/regional/Bhojpuri.png')">
+                    <div class="regional-overlay"></div>
+                    <div class="regional-content">
+                        <h3 class="regional-name">Bhojpuri</h3>
+                        <p class="regional-count" id="bhojpuri-count">Loading...</p>
+                    </div>
                 </div>
-                <div class="regional-card gujarati" onclick="viewCategory('gujarati', 'Gujarati Garba')">
-                    <div class="regional-icon">🪕</div>
-                    <div class="regional-name">Gujarati</div>
+                <div class="regional-card coming-soon-card" style="background-image: url('/assets/regional/Gujarati.png')">
+                    <div class="regional-overlay"></div>
+                    <div class="regional-content">
+                        <h3 class="regional-name">Gujarati</h3>
+                        <p class="regional-count">Coming Soon</p>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Trending Songs (Top 3 List + 4-9 Horizontal) -->
+        <!-- Trending Songs (2 rows of 5) -->
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">🔥 Trending Songs</h2>
             </div>
-            <!-- Top 3 in List -->
-            <div class="top10-list" id="top3-list">
-                <!-- Will be populated by JS -->
-            </div>
-            <!-- 4-9 in Horizontal Scroll -->
-            <div class="horizontal-scroll" id="trending-scroll" style="margin-top: 16px;">
-                <!-- Will be populated by JS -->
+            <div class="trending-grid" id="trending-grid">
+                <!-- Will be populated by JS with 2 rows of 5 songs -->
             </div>
         </section>
 
-        <!-- Albums -->
-        <section class="section">
-            <div class="section-header">
-                <h2 class="section-title">Popular Albums</h2>
-            </div>
-            <div class="horizontal-scroll" id="albums-scroll">
-                <!-- Will be populated by JS -->
-            </div>
-        </section>
+        <!-- Albums by Language -->
+        <div id="albums-by-language">
+            <!-- Will be populated by JS with language-wise sections -->
+        </div>
 
 
-        <!-- Recently Played -->
-        <section class="section">
+        <!-- Recently Played (Temporarily Disabled) -->
+        <!-- <section class="section">
             <div class="section-header">
                 <h2 class="section-title">Recently Played</h2>
             </div>
             <div class="horizontal-scroll" id="recent-scroll">
-                <!-- Will be populated by JS -->
+                Will be populated by JS
             </div>
-        </section>
+        </section> -->
 
     </main>
 
@@ -109,6 +140,317 @@
         </header>
         <div class="category-content" id="category-content">
             <!-- Will be populated by JS -->
+        </div>
+    </div>
+
+    <!-- Search View (Full Screen) -->
+    <div class="search-view" id="search-view">
+        <header class="search-header">
+            <button class="icon-btn" id="close-search">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+            </button>
+            <div class="search-input-container">
+                <svg class="search-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <input type="text" class="search-input" id="search-input" placeholder="Search songs, artists..." autocomplete="off">
+                <button class="icon-btn" id="clear-search" style="display: none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="search-content" id="search-content">
+            <div class="search-empty" id="search-empty">
+                <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+                <div style="color: var(--text-secondary);">Search for songs, artists, composers</div>
+            </div>
+
+            <div class="search-results" id="search-results" style="display: none;">
+                <div class="search-results-header">
+                    <span class="search-results-count" id="results-count">0 results</span>
+                </div>
+                <div class="search-results-list" id="search-results-list"></div>
+            </div>
+
+            <div class="search-loading" id="search-loading" style="display: none;">
+                <div class="spinner"></div>
+                <div style="margin-top: 12px; color: var(--text-secondary);">Searching...</div>
+            </div>
+
+            <div class="search-no-results" id="search-no-results" style="display: none;">
+                <div style="font-size: 48px; margin-bottom: 16px;">😔</div>
+                <div style="color: var(--text-secondary);">No songs found</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Library View -->
+    <div class="library-view" id="library-view">
+        <header class="library-header">
+            <button class="icon-btn" id="back-from-library">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+            </button>
+            <h1>Your Library</h1>
+            <button class="icon-btn" id="create-playlist-mobile-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+            </button>
+        </header>
+
+        <div class="library-content">
+            <!-- Login prompt if not authenticated -->
+            <div class="library-login-prompt" id="library-login-prompt" style="display: none;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
+                <h3>Build Your Music Library</h3>
+                <p style="color: var(--text-secondary); margin: 16px 0;">Sign in to create playlists and save your favorite songs</p>
+                <button class="btn-primary" onclick="showMobileLogin()">Sign In</button>
+            </div>
+
+            <!-- Playlists grid -->
+            <div class="library-playlists" id="library-playlists">
+                <div class="library-empty" id="library-empty" style="display: none;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🎵</div>
+                    <h3>No Playlists Yet</h3>
+                    <p style="color: var(--text-secondary); margin: 16px 0;">Create your first playlist</p>
+                    <button class="btn-primary" onclick="showCreatePlaylistMobile()">Create Playlist</button>
+                </div>
+
+                <div class="playlists-grid" id="playlists-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Playlist Detail View -->
+    <div class="playlist-detail-view" id="playlist-detail-view">
+        <header class="playlist-detail-header">
+            <button class="icon-btn" id="back-from-playlist">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+            </button>
+            <span id="playlist-detail-title-header"></span>
+            <button class="icon-btn" id="playlist-menu-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+            </button>
+        </header>
+
+        <div class="playlist-detail-content" id="playlist-detail-content">
+            <!-- Will be populated by JS -->
+        </div>
+    </div>
+
+    <!-- Create/Edit Playlist Modal -->
+    <div class="mobile-modal" id="playlist-modal">
+        <div class="mobile-modal-backdrop" onclick="closePlaylistModal()"></div>
+        <div class="mobile-modal-content">
+            <div class="mobile-modal-header">
+                <h2 id="playlist-modal-title">Create Playlist</h2>
+                <button class="icon-btn" onclick="closePlaylistModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="playlist-form-mobile">
+                <div class="form-group">
+                    <label>Playlist Name</label>
+                    <input type="text" id="playlist-name-mobile" required placeholder="My Awesome Playlist">
+                </div>
+
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea id="playlist-desc-mobile" rows="3" placeholder="Tell us about this playlist..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="playlist-public-mobile">
+                        <span>Make playlist public</span>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closePlaylistModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" id="playlist-submit-btn">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add to Playlist Modal -->
+    <div class="mobile-modal" id="add-to-playlist-modal">
+        <div class="mobile-modal-backdrop" onclick="closeAddToPlaylistModal()"></div>
+        <div class="mobile-modal-content">
+            <div class="mobile-modal-header">
+                <h2>Add to Playlist</h2>
+                <button class="icon-btn" onclick="closeAddToPlaylistModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="playlist-select-list" id="playlist-select-list">
+                <!-- Will be populated by JS -->
+            </div>
+
+            <button class="btn-create-new" onclick="createNewPlaylistFromAdd()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Create New Playlist
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile View -->
+    <div class="profile-view" id="profile-view">
+        <header class="profile-header">
+            <button class="icon-btn" id="back-from-profile">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                </svg>
+            </button>
+            <h1>Profile</h1>
+            <div class="spacer"></div>
+        </header>
+
+        <div class="profile-content">
+            <!-- Guest State -->
+            <div class="profile-guest" id="profile-guest" style="display: none;">
+                <div style="font-size: 64px; margin-bottom: 16px;">👤</div>
+                <h3>Sign In to Your Account</h3>
+                <p style="color: var(--text-secondary); margin: 16px 0;">Create playlists, save songs, and track your listening history</p>
+                <button class="btn-primary" onclick="showMobileLogin()" style="margin-bottom: 12px;">Sign In</button>
+                <button class="btn-secondary" onclick="showMobileRegister()">Create Account</button>
+            </div>
+
+            <!-- Logged In State -->
+            <div class="profile-user" id="profile-user" style="display: none;">
+                <div class="profile-card">
+                    <div class="profile-avatar">👤</div>
+                    <h2 id="profile-name">User Name</h2>
+                    <p id="profile-email">user@email.com</p>
+                    <button class="btn-logout" onclick="handleMobileLogout()">Logout</button>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-playlists">0</div>
+                        <div class="stat-label">Playlists</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-songs">0</div>
+                        <div class="stat-label">Songs Saved</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-plays">0</div>
+                        <div class="stat-label">Total Plays</div>
+                    </div>
+                </div>
+
+                <button class="profile-link-item" onclick="goToLibrary()">
+                    📚 Your Library →
+                </button>
+
+                <div class="profile-section" id="profile-recent-section">
+                    <h3>Recently Played</h3>
+                    <div class="horizontal-scroll" id="profile-recent-scroll"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="mobile-modal" id="login-modal">
+        <div class="mobile-modal-backdrop" onclick="closeMobileLogin()"></div>
+        <div class="mobile-modal-content">
+            <div class="mobile-modal-header">
+                <h2>Sign In</h2>
+                <button class="icon-btn" onclick="closeMobileLogin()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="login-form-mobile">
+                <div class="form-group">
+                    <label>Username or Email</label>
+                    <input type="text" id="login-username" required placeholder="Enter username or email">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" required placeholder="Enter password">
+                </div>
+
+                <div class="modal-message" id="login-message" style="display: none;"></div>
+
+                <button type="submit" class="btn-primary">Sign In</button>
+
+                <p style="text-align: center; margin-top: 16px; color: var(--text-secondary);">
+                    Don't have an account?
+                    <a href="#" onclick="switchToRegister(); return false;" style="color: var(--accent-primary);">Register</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="mobile-modal" id="register-modal">
+        <div class="mobile-modal-backdrop" onclick="closeMobileRegister()"></div>
+        <div class="mobile-modal-content">
+            <div class="mobile-modal-header">
+                <h2>Create Account</h2>
+                <button class="icon-btn" onclick="closeMobileRegister()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="register-form-mobile">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="register-username" required placeholder="Choose a username">
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="register-email" required placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="register-fullname" required placeholder="Your full name">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="register-password" required placeholder="Create a password">
+                </div>
+
+                <div class="modal-message" id="register-message" style="display: none;"></div>
+
+                <button type="submit" class="btn-primary">Create Account</button>
+
+                <p style="text-align: center; margin-top: 16px; color: var(--text-secondary);">
+                    Already have an account?
+                    <a href="#" onclick="switchToLogin(); return false;" style="color: var(--accent-primary);">Sign In</a>
+                </p>
+            </form>
         </div>
     </div>
 
@@ -154,6 +496,7 @@
             <div class="progress-section">
                 <div class="progress-bar" id="progress-bar-container">
                     <div class="progress-fill" id="progress-fill"></div>
+                    <div class="progress-thumb" id="progress-thumb"></div>
                 </div>
                 <div class="time-stamps">
                     <span id="current-time">0:00</span>
@@ -213,7 +556,8 @@
             </svg>
             <span>Search</span>
         </button>
-        <button class="nav-item" data-page="library">
+        <!-- Temporarily Disabled -->
+        <!-- <button class="nav-item" data-page="library">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
             </svg>
@@ -224,12 +568,23 @@
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
             <span>Profile</span>
-        </button>
+        </button> -->
     </nav>
 
     <!-- Hidden Audio Element -->
     <audio id="audio-player"></audio>
 
-    <script src="mobile.js"></script>
+    <!-- Main App Script - LOAD FIRST for fast UI -->
+    <script src="mobile.js" defer></script>
+
+    <!-- Simple RudderStack Tracker (Direct API) - DEFER for faster load -->
+    <script src="/js/simple-tracker.js" defer></script>
+
+    <!-- Alias for compatibility -->
+    <script defer>
+        window.addEventListener('DOMContentLoaded', () => {
+            window.tracker = window.simpleTracker || window.tracker;
+        });
+    </script>
 </body>
 </html>

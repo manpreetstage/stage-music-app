@@ -387,7 +387,7 @@ app.get('/api/auth/me', isAuthenticated, (req, res) => {
 // Get all songs
 app.get('/api/songs', (req, res) => {
     const language = req.query.language;
-    const limit = parseInt(req.query.limit) || null; // PERFORMANCE: Support pagination
+    const limit = parseInt(req.query.limit) || null;
     const offset = parseInt(req.query.offset) || 0;
 
     let sql = 'SELECT * FROM songs';
@@ -400,7 +400,6 @@ app.get('/api/songs', (req, res) => {
 
     sql += ' ORDER BY created_at DESC';
 
-    // PERFORMANCE: Add LIMIT/OFFSET for pagination
     if (limit) {
         sql += ' LIMIT ? OFFSET ?';
         params.push(limit, offset);
@@ -562,8 +561,6 @@ app.get('/api/quick-picks', (req, res) => {
             res.status(500).json({ error: err.message });
             return;
         }
-
-        // Return ONLY admin's manual selections - NO AUTO-FILL
         res.json({ songs: quickPicks });
     });
 });

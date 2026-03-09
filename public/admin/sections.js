@@ -3,6 +3,39 @@ let allSections = [];
 let currentSection = null;
 let selectedSongId = null;
 
+// ========================================
+// TOAST NOTIFICATION SYSTEM
+// ========================================
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️';
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-message">${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function showSuccessToast(message) {
+    showToast(`${message}<br><small style="opacity:0.8;">Refresh mobile app to see changes</small>`, 'success');
+}
+
+function showErrorToast(message) {
+    showToast(message, 'error');
+}
+
 // Section configuration
 const builtInSections = [
     { id: 'quick-picks', name: 'Quick Picks', icon: '⚡', type: 'builtin', limit: 9 },
@@ -291,6 +324,8 @@ async function loadSectionSongs(sectionId) {
                         <div class="song-title-small">${album.title}</div>
                         <div class="song-artist-small">${album.artist || 'Unknown'} • ${album.song_count || 0} songs</div>
                     </div>
+                    <button class="btn-edit" onclick="editAlbum(${album.id}, '${sectionId}'); event.stopPropagation();">✏️ Edit</button>
+                    <button class="remove-btn" onclick="deleteAlbum(${album.id}, '${album.title.replace(/'/g, "\\'")}', '${sectionId}'); event.stopPropagation();">🗑️ Delete</button>
                 </div>
             `).join('');
 
@@ -374,9 +409,18 @@ function selectSong(sectionId, songId, event) {
 
 // Add song
 async function addSong(sectionId) {
-    if (!selectedSongId) return alert('Select a song!');
+    if (!selectedSongId) {
+        showErrorToast('Please select a song first!');
+        return;
+    }
 
     const section = allSections.find(s => s.id === sectionId);
+    if (!section) {
+        console.error('Section not found:', sectionId);
+        showErrorToast('Section not found');
+        return;
+    }
+
     const btn = document.getElementById(`add-btn-${sectionId}`);
     btn.innerHTML = '⏳ Adding...';
     btn.disabled = true;
@@ -391,24 +435,30 @@ async function addSong(sectionId) {
             endpoint = `/api/categories/${section.categoryId}/songs`;
         }
 
+        console.log('Adding song:', { sectionId, songId: selectedSongId, endpoint, sectionType: section.type });
+
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ song_id: selectedSongId })
         });
 
+        const data = await response.json();
+        console.log('Response:', response.status, data);
+
         if (response.ok) {
-            alert('✅ Added!');
+            showSuccessToast(`Song added to ${section.name}!`);
             selectedSongId = null;
             document.getElementById(`status-${sectionId}`).textContent = 'Select a song';
             await loadSectionSongs(sectionId);
             document.querySelectorAll(`#grid-${sectionId} .song-item`).forEach(i => i.classList.remove('selected'));
         } else {
-            alert('❌ Failed');
+            showErrorToast(`Failed: ${data.error || 'Unknown error'}`);
             btn.disabled = false;
         }
     } catch (error) {
-        alert('❌ Error');
+        console.error('Error adding song:', error);
+        showErrorToast(`Error: ${error.message}`);
         btn.disabled = false;
     }
     btn.innerHTML = `➕ Add to ${section.name}`;
@@ -417,7 +467,7 @@ async function addSong(sectionId) {
 // Remove song
 async function removeSong(sectionId, songId, event) {
     if (event) { event.stopPropagation(); event.preventDefault(); }
-    if (!confirm('Remove?')) return;
+    if (!confirm('Remove this song?')) return;
 
     const section = allSections.find(s => s.id === sectionId);
 
@@ -432,10 +482,15 @@ async function removeSong(sectionId, songId, event) {
         }
 
         const response = await fetch(endpoint, { method: 'DELETE' });
-        if (response.ok) await loadSectionSongs(sectionId);
-        else alert('Failed');
+        if (response.ok) {
+            showSuccessToast(`Song removed from ${section.name}!`);
+            await loadSectionSongs(sectionId);
+        } else {
+            showErrorToast('Failed to remove song');
+        }
     } catch (error) {
-        alert('Error');
+        console.error('Error removing song:', error);
+        showErrorToast('Error removing song');
     }
 }
 
@@ -509,6 +564,15 @@ async function saveNewOrder(list, sectionId) {
     const section = allSections.find(s => s.id === sectionId);
     const items = list.querySelectorAll('.song-item-list');
 
+    console.log('💾 Saving order for:', {
+        sectionId,
+        sectionName: section?.name,
+        sectionType: section?.type,
+        categoryId: section?.categoryId,
+        customId: section?.customId,
+        itemsCount: items.length
+    });
+
     try {
         let endpoint;
         let body;
@@ -533,13 +597,25 @@ async function saveNewOrder(list, sectionId) {
             body = JSON.stringify({ songIds });
         }
 
-        await fetch(endpoint, {
+        console.log('📡 Calling API:', { endpoint, songCount: JSON.parse(body).songIds?.length || JSON.parse(body).albumIds?.length });
+
+        const response = await fetch(endpoint, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: body
         });
+
+        const result = await response.json();
+        console.log('✅ API Response:', response.status, result);
+
+        if (response.ok) {
+            showSuccessToast(`✅ ${section.name} order saved!`);
+        } else {
+            showErrorToast(`Failed: ${result.error || 'Unknown error'}`);
+        }
     } catch (error) {
-        console.error('Error saving order:', error);
+        console.error('❌ Error saving order:', error);
+        showErrorToast(`Error: ${error.message}`);
     }
 }
 
@@ -765,7 +841,7 @@ async function submitEditSong(event) {
         }
 
         if (response.ok) {
-            alert('✅ Song updated successfully!');
+            showSuccessToast('Song updated successfully!');
             closeEditModal();
 
             // Reload all songs
@@ -777,7 +853,7 @@ async function submitEditSong(event) {
             }
         } else {
             const data = await response.json();
-            alert('❌ Failed to update song: ' + (data.error || 'Unknown error'));
+            showErrorToast('Failed to update song: ' + (data.error || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error updating song:', error);
@@ -956,5 +1032,212 @@ async function submitUploadSong(event) {
         }
 
         alert('❌ Error uploading song: ' + error.message);
+    }
+}
+
+// ============ ALBUM EDIT FUNCTIONS ============
+let currentEditingAlbumId = null;
+let currentEditingSectionId = null;
+
+async function editAlbum(albumId, sectionId) {
+    currentEditingAlbumId = albumId;
+    currentEditingSectionId = sectionId;
+
+    // Close Add Song modal if open
+    closeAddSongToAlbumModal();
+
+    try {
+        const response = await fetch(`/api/albums/${albumId}`);
+        const data = await response.json();
+        const album = data.album;
+        const songs = data.songs || [];
+
+        document.getElementById('edit-album-id').value = album.id;
+        document.getElementById('edit-album-section-id').value = sectionId;
+        document.getElementById('edit-album-name').value = album.name || album.title;
+        document.getElementById('edit-album-cover-preview').src = album.cover_image || '/assets/default-cover.jpg';
+        document.getElementById('album-songs-count').textContent = songs.length;
+
+        const songsList = document.getElementById('album-songs-list');
+        songsList.innerHTML = songs.map(song => `
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a1a; border-radius: 8px; border: 2px solid #333;">
+                <img src="${song.cover_image || '/assets/default-cover.jpg'}" style="width: 60px; height: 60px; border-radius: 6px; object-fit: cover;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #fff;">${song.title}</div>
+                    <div style="color: #888; font-size: 0.85em;">${song.singer || 'Unknown'}</div>
+                </div>
+                <input type="file" id="cover-${song.id}" accept="image/*" onchange="updateSongCover(${song.id})" style="display: none;">
+                <button class="btn-edit" onclick="document.getElementById('cover-${song.id}').click(); event.preventDefault();" style="padding: 8px 16px; font-size: 0.9em;">
+                    📷 Cover
+                </button>
+                <button class="remove-btn" onclick="removeSongFromAlbum(${albumId}, ${song.id}); event.preventDefault();" style="padding: 8px 16px; font-size: 0.9em;">
+                    Remove
+                </button>
+            </div>
+        `).join('');
+
+        document.getElementById('edit-album-modal').classList.add('active');
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+function closeEditAlbumModal() {
+    document.getElementById('edit-album-modal').classList.remove('active');
+    closeAddSongToAlbumModal(); // Also close Add Song modal
+}
+
+async function submitEditAlbum(event) {
+    event.preventDefault();
+
+    const albumId = document.getElementById('edit-album-id').value;
+    const sectionId = document.getElementById('edit-album-section-id').value;
+    const name = document.getElementById('edit-album-name').value;
+    const coverFile = document.getElementById('edit-album-cover-file').files[0];
+
+    try {
+        const formData = new FormData();
+        formData.append('name', name);
+
+        if (coverFile) {
+            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1000, useWebWorker: true, fileType: 'image/jpeg' };
+            const compressed = await imageCompression(coverFile, options);
+            formData.append('cover', compressed, 'cover.jpg');
+        }
+
+        const response = await fetch(`/api/admin/albums/${albumId}`, {
+            method: 'PUT',
+            body: formData
+        });
+
+        if (response.ok) {
+            alert('✅ Saved!');
+            closeEditAlbumModal();
+            await loadSectionSongs(sectionId);
+        } else {
+            alert('❌ Error');
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function updateSongCover(songId) {
+    const file = document.getElementById(`cover-${songId}`).files[0];
+    if (!file) return;
+
+    try {
+        const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1000, useWebWorker: true, fileType: 'image/jpeg' };
+        const compressed = await imageCompression(file, options);
+
+        const formData = new FormData();
+        formData.append('cover', compressed, 'cover.jpg');
+
+        const response = await fetch(`/api/admin/songs/${songId}/cover`, {
+            method: 'PUT',
+            body: formData
+        });
+
+        if (response.ok) {
+            alert('✅ Cover updated!');
+            await editAlbum(currentEditingAlbumId, currentEditingSectionId);
+        } else {
+            alert('❌ Error');
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function removeSongFromAlbum(albumId, songId) {
+    if (!confirm('Remove song?')) return;
+
+    try {
+        const response = await fetch(`/api/admin/albums/${albumId}/songs/${songId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            alert('✅ Removed!');
+            await editAlbum(albumId, currentEditingSectionId);
+        } else {
+            alert('❌ Error');
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+function showAddSongToAlbumModal() {
+    const searchInput = document.getElementById('add-song-search');
+    const songsList = document.getElementById('add-song-list');
+
+    const filterSongs = (query = '') => {
+        const filtered = allSongs.filter(s =>
+            s.title.toLowerCase().includes(query.toLowerCase()) ||
+            (s.singer && s.singer.toLowerCase().includes(query.toLowerCase()))
+        );
+
+        songsList.innerHTML = filtered.map(song => `
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a1a; border-radius: 8px; cursor: pointer;" onclick="addSongToAlbum(${song.id})">
+                <img src="${song.cover_image || '/assets/default-cover.jpg'}" style="width: 50px; height: 50px; border-radius: 6px;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #fff;">${song.title}</div>
+                    <div style="color: #888; font-size: 0.85em;">${song.singer || 'Unknown'}</div>
+                </div>
+                <span style="color: #28a745;">➕</span>
+            </div>
+        `).join('');
+    };
+
+    searchInput.value = '';
+    searchInput.oninput = (e) => filterSongs(e.target.value);
+    filterSongs();
+
+    document.getElementById('add-song-to-album-modal').classList.add('active');
+}
+
+function closeAddSongToAlbumModal() {
+    document.getElementById('add-song-to-album-modal').classList.remove('active');
+}
+
+async function addSongToAlbum(songId) {
+    if (!currentEditingAlbumId) return;
+
+    try {
+        const response = await fetch(`/api/admin/songs/${songId}/album`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ album_id: currentEditingAlbumId })
+        });
+
+        if (response.ok) {
+            alert('✅ Added!');
+            closeAddSongToAlbumModal();
+            await editAlbum(currentEditingAlbumId, currentEditingSectionId);
+        } else {
+            alert('❌ Error');
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+    }
+}
+
+async function deleteAlbum(albumId, albumTitle, sectionId) {
+    if (!confirm(`Delete "${albumTitle}"?\n\nSongs won't be deleted.`)) return;
+
+    try {
+        const response = await fetch(`/api/admin/albums/${albumId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            alert('✅ Deleted!');
+            await loadSectionSongs(sectionId);
+        } else {
+            alert('❌ Error');
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
     }
 }
