@@ -27,6 +27,43 @@ let milestonesReached = {
 };
 
 // ========================================
+// OVERFLOW MANAGEMENT (Fix scroll freeze)
+// ========================================
+function updateBodyOverflow() {
+    // Check if ANY view is currently open
+    const fullPlayer = document.getElementById('full-player');
+    const categoryView = document.getElementById('category-view');
+    const searchView = document.getElementById('search-view');
+    const libraryView = document.getElementById('library-view');
+    const profileView = document.getElementById('profile-view');
+    const playlistDetailView = document.getElementById('playlist-detail-view');
+
+    const anyModalOpen =
+        document.getElementById('playlist-modal')?.classList.contains('active') ||
+        document.getElementById('add-to-playlist-modal')?.classList.contains('active') ||
+        document.getElementById('login-modal')?.classList.contains('active') ||
+        document.getElementById('register-modal')?.classList.contains('active');
+
+    const anyViewOpen =
+        fullPlayer?.classList.contains('active') ||
+        categoryView?.classList.contains('active') ||
+        searchView?.classList.contains('active') ||
+        libraryView?.classList.contains('active') ||
+        profileView?.classList.contains('active') ||
+        playlistDetailView?.classList.contains('active') ||
+        anyModalOpen;
+
+    // Set or clear overflow based on state
+    if (anyViewOpen) {
+        updateBodyOverflow();
+    } else {
+        updateBodyOverflow();
+    }
+
+    console.log('🔄 Overflow updated:', anyViewOpen ? 'hidden' : 'auto');
+}
+
+// ========================================
 // NAVIGATION STACK (History Management)
 // ========================================
 let navigationStack = []; // Track current view stack
@@ -58,12 +95,24 @@ const durationEl = document.getElementById('duration');
 const minimizeBtn = document.getElementById('minimize-btn');
 
 // ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+// Get best available cover image (handles empty strings)
+function getCoverImage(song) {
+    const thumb = song.cover_thumb && song.cover_thumb.trim();
+    const mobile = song.cover_mobile && song.cover_mobile.trim();
+    const image = song.cover_image;
+    return thumb || mobile || image || '/assets/placeholder.png';
+}
+
+// ========================================
 // INITIALIZATION
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     // Version check
-    console.log('🚀 Stage Music v1.3 - Navigation Fixed');
+    console.log('🚀 Stage Music v1.4 - Performance Optimized');
     console.log('📅', new Date().toISOString());
     // Register Service Worker for offline support & caching
     if ('serviceWorker' in navigator) {
@@ -77,6 +126,37 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMediaSession(); // Initialize lock screen controls
     setupNavigationHistory(); // Setup browser back button handling
     preloadFirstSong(); // Preload first song for instant play
+});
+
+// ========================================
+// SAFETY CHECK - Fix stuck overflow
+// ========================================
+setInterval(() => {
+    updateBodyOverflow();
+}, 2000); // Check every 2 seconds
+
+// ========================================
+// MEMORY CLEANUP ON PAGE UNLOAD
+// ========================================
+window.addEventListener('beforeunload', () => {
+    // Cleanup HLS instance
+    if (window.hlsInstance) {
+        try {
+            window.hlsInstance.removeAllListeners();
+            window.hlsInstance.detachMedia();
+            window.hlsInstance.destroy();
+            window.hlsInstance = null;
+        } catch (e) {
+            console.warn('Cleanup warning:', e);
+        }
+    }
+
+    // Pause and clear audio
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.src = '';
+        audioPlayer.load();
+    }
 });
 
 // ========================================
@@ -208,7 +288,7 @@ function hideLoadingScreen() {
 function renderQuickPicksHTML(picks, grid) {
     grid.innerHTML = picks.map((song, index) => `
         <div class="quick-pick-card" onclick="playFromQuickPicks(${song.id})">
-            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}"
+            <img src="${getCoverImage(song)}"
                  alt="${song.title}"
                  class="quick-pick-cover"
                  loading="${index < 3 ? 'eager' : 'lazy'}"
@@ -272,7 +352,7 @@ async function renderQuickPicks() {
         };
         grid.innerHTML = picks.map((song, index) => `
             <div class="quick-pick-card" onclick="playFromQuickPicks(${song.id})">
-                <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="quick-pick-cover">
+                <img src="${getCoverImage(song)}" alt="${song.title}" class="quick-pick-cover" loading="eager">
                 <div class="quick-pick-overlay">
                     <div class="quick-pick-title">${song.title}</div>
                     <div class="quick-pick-artist">${song.singer || 'Unknown'}</div>
@@ -305,7 +385,7 @@ async function renderTop10() {
         // Vertical list with horizontal cards
         trendingGrid.innerHTML = allTrending.map(song => `
             <div class="trending-card" onclick="playFromTrending(${song.id})">
-                <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${escapeHtml(song.title)}" class="trending-cover">
+                <img src="${getCoverImage(song)}" alt="${escapeHtml(song.title)}" class="trending-cover" loading="lazy">
                 <div style="flex: 1; min-width: 0;">
                     <div class="trending-title">${escapeHtml(song.title)}</div>
                     <div class="trending-artist">${escapeHtml(song.singer || 'Unknown')}</div>
@@ -327,7 +407,7 @@ async function renderTop10() {
         };
         trendingGrid.innerHTML = allTrending.map(song => `
             <div class="trending-card" onclick="playFromTrending(${song.id})">
-                <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${escapeHtml(song.title)}" class="trending-cover">
+                <img src="${getCoverImage(song)}" alt="${escapeHtml(song.title)}" class="trending-cover" loading="lazy">
                 <div style="flex: 1; min-width: 0;">
                     <div class="trending-title">${escapeHtml(song.title)}</div>
                     <div class="trending-artist">${escapeHtml(song.singer || 'Unknown')}</div>
@@ -440,8 +520,21 @@ async function viewCustomSection(sectionId, sectionName) {
         // Use existing category view
         showCategoryView(sectionName, songs, language);
     } catch (error) {
-        console.error('Error loading section songs:', error);
-        alert('Error loading songs');
+        console.error('❌ Error loading section songs:', error);
+        console.error('Section ID:', sectionId, 'Name:', sectionName);
+        console.error('Error details:', error.message, error.stack);
+
+        // Show user-friendly error
+        categoryContent.innerHTML = `
+            <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary);">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">Failed to load songs</div>
+                <div style="font-size: 12px; color: var(--text-tertiary);">${error.message || 'Unknown error'}</div>
+                <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: var(--accent-primary); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    Reload Page
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -529,11 +622,27 @@ async function viewLanguageCategory(language) {
         window.tracker.trackRegionalHitsCategory(language, categoryId);
     }
 
+    // Show loading state immediately
+    const categoryView = document.getElementById('category-view');
+    const categoryTitle = document.getElementById('category-view-title');
+    const categoryContent = document.getElementById('category-content');
+
+    categoryTitle.textContent = categoryName;
+    categoryContent.innerHTML = `
+        <div class="category-loading">
+            <div class="spinner"></div>
+            <div style="margin-top: 12px; color: var(--text-secondary);">Loading songs...</div>
+        </div>
+    `;
+
+    categoryView.classList.add('active');
+    updateBodyOverflow();
+
     if (!categoryId) {
         console.error('Unknown language category:', language);
         // Fallback to filtering allSongs
         const languageSongs = allSongs.filter(s => s.language === language);
-        showCategoryView(categoryName, languageSongs);
+        showCategoryView(categoryName, languageSongs, null, 'category', null, true); // skipHistory = true
         return;
     }
 
@@ -548,13 +657,32 @@ async function viewLanguageCategory(language) {
 
         console.log(`📋 ${categoryName} loaded from API:`, songs.length, 'songs in admin order');
 
-        // Show songs in category view
-        showCategoryView(categoryName, songs);
+        // Show songs in category view (skipHistory = true since already open)
+        showCategoryView(categoryName, songs, null, 'category', null, true);
     } catch (error) {
-        console.error('Error loading category songs:', error);
-        // Fallback to filtering allSongs
+        console.error('❌ Error loading category songs:', error);
+        console.error('Language:', language, 'Category ID:', categoryId);
+        console.error('Error details:', error.message);
+
+        // Fallback to filtering allSongs (offline mode)
+        console.log('📴 Using offline mode - filtering from local songs');
         const languageSongs = allSongs.filter(s => s.language === language);
-        showCategoryView(categoryName, languageSongs);
+        console.log(`Found ${languageSongs.length} songs locally for ${language}`);
+
+        if (languageSongs.length > 0) {
+            showCategoryView(categoryName, languageSongs, null, 'category', null, true);
+        } else {
+            // No songs found even locally
+            categoryContent.innerHTML = `
+                <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary);">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🎵</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No ${language} songs found</div>
+                    <button onclick="window.history.back()" style="margin-top: 20px; padding: 10px 20px; background: var(--bg-tertiary); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        Go Back
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
@@ -566,7 +694,7 @@ function renderRecentlyPlayed() {
 
     scroll.innerHTML = recent.map(song => `
         <div class="song-card" onclick="playSong(${song.id})">
-            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="card-cover">
+            <img src="${getCoverImage(song)}" alt="${song.title}" class="card-cover">
             <div class="card-info">
                 <div class="card-title">${song.title}</div>
                 <div class="card-subtitle">${song.singer || 'Unknown'}</div>
@@ -690,7 +818,7 @@ function renderUpNext() {
         if (remainingSongs.length < 10 && queueContext && queueContext.language) {
             upNextList.innerHTML = nextSongs.map(song => `
                 <div class="up-next-item" onclick="playSong(${song.id})">
-                    <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="up-next-cover">
+                    <img src="${getCoverImage(song)}" alt="${song.title}" class="up-next-cover">
                     <div class="up-next-info">
                         <div class="up-next-song-title">${song.title}</div>
                         <div class="up-next-artist">${song.singer || 'Unknown'}</div>
@@ -716,7 +844,7 @@ function renderUpNext() {
 
     upNextList.innerHTML = nextSongs.map(song => `
         <div class="up-next-item" onclick="playSong(${song.id})">
-            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="up-next-cover">
+            <img src="${getCoverImage(song)}" alt="${song.title}" class="up-next-cover">
             <div class="up-next-info">
                 <div class="up-next-song-title">${song.title}</div>
                 <div class="up-next-artist">${song.singer || 'Unknown'}</div>
@@ -795,9 +923,17 @@ function loadAudioSource(song) {
         if (Hls.isSupported()) {
             console.log('🎵 Loading HLS stream:', song.hls_master_url);
 
-            // Destroy existing HLS instance if any
+            // Destroy existing HLS instance if any (with proper cleanup)
             if (window.hlsInstance) {
-                window.hlsInstance.destroy();
+                try {
+                    window.hlsInstance.removeAllListeners();
+                    window.hlsInstance.detachMedia();
+                    window.hlsInstance.destroy();
+                } catch (e) {
+                    console.warn('HLS cleanup warning:', e);
+                } finally {
+                    window.hlsInstance = null;
+                }
             }
 
             // Add cache busting timestamp
@@ -808,7 +944,11 @@ function loadAudioSource(song) {
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: false,
-                backBufferLength: 90,
+                backBufferLength: 30, // Reduced from 90 to save memory
+                maxBufferLength: 30,
+                maxMaxBufferLength: 60,
+                maxBufferSize: 60 * 1000 * 1000, // 60MB max
+                maxBufferHole: 0.5,
                 xhrSetup: function(xhr, url) {
                     // Add cache buster to all HLS requests
                     if (url.indexOf('?') === -1 && url.indexOf('.m3u8') !== -1) {
@@ -924,14 +1064,14 @@ function playSong(songId) {
     }
 
     // Update mini player
-    miniCover.src = (song.cover_thumb || song.cover_mobile || song.cover_image);
+    miniCover.src = getCoverImage(song);
     miniTitle.textContent = song.title;
     miniArtist.textContent = song.singer || 'Unknown';
     miniPlayer.style.display = 'flex';
     updatePlayButton(true);
 
     // Update full player
-    albumArt.src = (song.cover_thumb || song.cover_mobile || song.cover_image);
+    albumArt.src = getCoverImage(song);
     songTitle.textContent = song.title;
     songArtist.textContent = song.singer || 'Unknown';
 
@@ -1221,7 +1361,7 @@ function playPrevious() {
 
 function showFullPlayer(skipHistory = false) {
     fullPlayer.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow(); // Centralized overflow management
 
     // Push to navigation history (unless coming from back button)
     if (!skipHistory) {
@@ -1236,7 +1376,7 @@ function showFullPlayer(skipHistory = false) {
 
 function hideFullPlayer() {
     fullPlayer.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 
     // Track full player minimized
     if (window.tracker) {
@@ -1501,7 +1641,7 @@ let searchTimeout = null;
 function showSearchView() {
     const searchView = document.getElementById('search-view');
     searchView.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 
     // Push to navigation history
     pushNavigationState('search');
@@ -1516,7 +1656,7 @@ function showSearchView() {
 function hideSearchView() {
     const searchView = document.getElementById('search-view');
     searchView.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 
     // Clear search input and reset states
     const searchInput = document.getElementById('search-input');
@@ -1585,7 +1725,7 @@ function showSearchResults(results) {
 
     resultsList.innerHTML = results.map(song => `
         <div class="search-result-item" onclick="playSong(${song.id})">
-            <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="search-result-cover">
+            <img src="${getCoverImage(song)}" alt="${song.title}" class="search-result-cover">
             <div class="search-result-info">
                 <div class="search-result-title">${song.title}</div>
                 <div class="search-result-artist">${song.singer || 'Unknown'}</div>
@@ -1675,7 +1815,7 @@ let currentUser = null;
 async function showLibraryView() {
     const libraryView = document.getElementById('library-view');
     libraryView.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 
     // Push to navigation history
     pushNavigationState('library');
@@ -1687,7 +1827,7 @@ async function showLibraryView() {
 function hideLibraryView() {
     const libraryView = document.getElementById('library-view');
     libraryView.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 }
 
 async function checkAuthAndLoadPlaylists() {
@@ -1795,7 +1935,7 @@ function showPlaylistDetailView(playlist, songs) {
                 <div class="playlist-songs-header">Songs</div>
                 ${songs.map(song => `
                     <div class="playlist-song-item">
-                        <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="playlist-song-cover" onclick="playSong(${song.id})">
+                        <img src="${getCoverImage(song)}" alt="${song.title}" class="playlist-song-cover" onclick="playSong(${song.id})">
                         <div class="playlist-song-info" onclick="playSong(${song.id})">
                             <div class="playlist-song-title">${song.title}</div>
                             <div class="playlist-song-artist">${song.singer || 'Unknown'}</div>
@@ -1818,13 +1958,13 @@ function showPlaylistDetailView(playlist, songs) {
     `;
 
     view.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 }
 
 function hidePlaylistDetailView() {
     const view = document.getElementById('playlist-detail-view');
     view.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
     currentPlaylistId = null;
 }
 
@@ -1891,13 +2031,13 @@ function showCreatePlaylistMobile() {
     document.getElementById('playlist-public-mobile').checked = false;
 
     modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 }
 
 function closePlaylistModal() {
     const modal = document.getElementById('playlist-modal');
     modal.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 }
 
 async function handlePlaylistFormSubmit(e) {
@@ -2019,7 +2159,7 @@ async function showAddToPlaylistModal(songId) {
 
         console.log('Adding active class to modal...');
         modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        updateBodyOverflow();
         console.log('✅ Modal should be visible now!');
     } catch (error) {
         console.error('❌ Error loading playlists:', error);
@@ -2030,7 +2170,7 @@ async function showAddToPlaylistModal(songId) {
 function closeAddToPlaylistModal() {
     const modal = document.getElementById('add-to-playlist-modal');
     modal.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
     currentSongForPlaylist = null;
 }
 
@@ -2110,7 +2250,7 @@ function setupPlaylistListeners() {
 async function showProfileView() {
     const profileView = document.getElementById('profile-view');
     profileView.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 
     // Push to navigation history
     pushNavigationState('profile');
@@ -2127,7 +2267,7 @@ async function showProfileView() {
 function hideProfileView() {
     const profileView = document.getElementById('profile-view');
     profileView.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 }
 
 async function loadUserProfile() {
@@ -2188,7 +2328,7 @@ async function loadRecentlyPlayed() {
                 section.style.display = 'block';
                 scroll.innerHTML = songs.map(song => `
                     <div class="song-card" onclick="playSong(${song.id})">
-                        <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="card-cover">
+                        <img src="${getCoverImage(song)}" alt="${song.title}" class="card-cover">
                         <div class="card-info">
                             <div class="card-title">${song.title}</div>
                             <div class="card-subtitle">${song.singer || 'Unknown'}</div>
@@ -2225,13 +2365,13 @@ function goToLibrary() {
 function showMobileLogin() {
     const modal = document.getElementById('login-modal');
     modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 }
 
 function closeMobileLogin() {
     const modal = document.getElementById('login-modal');
     modal.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 
     // Clear form
     document.getElementById('login-username').value = '';
@@ -2242,13 +2382,13 @@ function closeMobileLogin() {
 function showMobileRegister() {
     const modal = document.getElementById('register-modal');
     modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 }
 
 function closeMobileRegister() {
     const modal = document.getElementById('register-modal');
     modal.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 
     // Clear form
     document.getElementById('register-username').value = '';
@@ -2548,22 +2688,22 @@ function updateMediaSession(song) {
             album: song.album || 'Stage Music',
             artwork: [
                 {
-                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
+                    src: getCoverImage(song),
                     sizes: '512x512',
                     type: 'image/jpeg'
                 },
                 {
-                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
+                    src: getCoverImage(song),
                     sizes: '256x256',
                     type: 'image/jpeg'
                 },
                 {
-                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
+                    src: getCoverImage(song),
                     sizes: '128x128',
                     type: 'image/jpeg'
                 },
                 {
-                    src: (song.cover_thumb || song.cover_mobile || song.cover_image),
+                    src: getCoverImage(song),
                     sizes: '96x96',
                     type: 'image/jpeg'
                 }
@@ -2739,7 +2879,7 @@ function showCategoryView(categoryName, songs, languageOverride = null, contextT
             <div class="category-songs-list">
                 ${songs.map((song, index) => `
                     <div class="category-song-item" onclick="playSongFromCategoryView(${song.id}, ${index})">
-                        <img src="${(song.cover_thumb || song.cover_mobile || song.cover_image)}" alt="${song.title}" class="category-song-cover">
+                        <img src="${getCoverImage(song)}" alt="${song.title}" class="category-song-cover" loading="${index < 10 ? 'eager' : 'lazy'}">
                         <div class="category-song-info">
                             <div class="category-song-title">${song.title}</div>
                             <div class="category-song-artist">${song.singer || 'Unknown'}</div>
@@ -2756,7 +2896,7 @@ function showCategoryView(categoryName, songs, languageOverride = null, contextT
     }
 
     categoryView.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    updateBodyOverflow();
 
     // Push to navigation history (unless coming from back button)
     if (!skipHistory) {
@@ -2773,7 +2913,7 @@ function showCategoryView(categoryName, songs, languageOverride = null, contextT
 function hideCategoryView() {
     const categoryView = document.getElementById('category-view');
     categoryView.classList.remove('active');
-    document.body.style.overflow = '';
+    updateBodyOverflow();
 }
 
 // ========================================
@@ -2824,7 +2964,7 @@ function setupNavigationHistory() {
             // Check if there's a view underneath that needs overflow hidden
             const hasUnderlyingView = isCategoryOpen || isSearchOpen || isLibraryOpen || isProfileOpen;
             if (!hasUnderlyingView) {
-                document.body.style.overflow = ''; // Only reset if no view underneath
+                updateBodyOverflow(); // Only reset if no view underneath
             }
 
             navigationStack.pop();
@@ -2851,7 +2991,7 @@ function setupNavigationHistory() {
             console.log('→ Closing category');
             const categoryView = document.getElementById('category-view');
             categoryView.classList.remove('active');
-            document.body.style.overflow = '';
+            updateBodyOverflow();
             navigationStack.pop();
         } else {
             // On home - ALWAYS stay in app (critical for Android)

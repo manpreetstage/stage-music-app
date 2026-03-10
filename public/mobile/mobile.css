@@ -1220,7 +1220,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 120px; /* Space for mini player + bottom nav */
+    bottom: 0; /* Full screen - padding-bottom in content handles spacing */
     background: var(--bg-primary);
     z-index: 150;
     display: none;
@@ -1335,7 +1335,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 120px; /* Space for mini player + bottom nav */
+    bottom: 0; /* Full screen - padding-bottom in content handles spacing */
     background: var(--bg-primary);
     z-index: 150;
     display: none;
@@ -1509,7 +1509,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 120px; /* Space for mini player + bottom nav */
+    bottom: 0; /* Full screen - padding-bottom in content handles spacing */
     background: var(--bg-primary);
     z-index: 150;
     display: none;
@@ -1632,7 +1632,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 120px; /* Space for mini player + bottom nav */
+    bottom: 0; /* Full screen - padding-bottom in content handles spacing */
     background: var(--bg-primary);
     z-index: 160;
     display: none;
@@ -2065,7 +2065,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 120px; /* Space for mini player + bottom nav */
+    bottom: 0; /* Full screen - padding-bottom in content handles spacing */
     background: var(--bg-primary);
     z-index: 150;
     display: none;

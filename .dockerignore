@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.DS_Store
+*.log
+.env
+Haryanvi1/
+RJ1/
+HR2/
+Assets/
+*.md
+*.sh
+*.tar.gz
