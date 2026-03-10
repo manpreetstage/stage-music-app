@@ -55,9 +55,9 @@ function updateBodyOverflow() {
 
     // Set or clear overflow based on state
     if (anyViewOpen) {
-        updateBodyOverflow();
+        document.body.style.overflow = 'hidden';
     } else {
-        updateBodyOverflow();
+        document.body.style.overflow = '';
     }
 
     console.log('🔄 Overflow updated:', anyViewOpen ? 'hidden' : 'auto');
@@ -648,17 +648,28 @@ async function viewLanguageCategory(language) {
 
     try {
         // Load songs from category API in correct position order
+        console.log(`🔍 Fetching ${categoryName} from API...`);
         const response = await fetch(`/api/categories/${categoryId}/songs?_t=${Date.now()}`, {
             cache: 'no-store',
             headers: { 'Cache-Control': 'no-cache' }
         });
-        const data = await response.json();
-        const songs = data.songs || [];
 
+        console.log(`📡 API Response status:`, response.status, response.statusText);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(`📦 API Response data:`, data);
+
+        const songs = data.songs || [];
         console.log(`📋 ${categoryName} loaded from API:`, songs.length, 'songs in admin order');
 
         // Show songs in category view (skipHistory = true since already open)
+        console.log(`🎨 Rendering ${songs.length} songs in category view...`);
         showCategoryView(categoryName, songs, null, 'category', null, true);
+        console.log(`✅ Category view rendered successfully`);
     } catch (error) {
         console.error('❌ Error loading category songs:', error);
         console.error('Language:', language, 'Category ID:', categoryId);
