@@ -783,6 +783,80 @@ function playFromTrending(songId) {
     }
 }
 
+// ========================================
+// HLS-AWARE AUDIO PLAYER
+// ========================================
+function loadAudioSource(song) {
+    const audioPlayer = document.getElementById('audio-player');
+
+    // Priority: HLS > Optimized (128k) > Original
+    if (song.hls_master_url && song.has_hls) {
+        // Use HLS.js for adaptive streaming
+        if (Hls.isSupported()) {
+            console.log('🎵 Loading HLS stream:', song.hls_master_url);
+
+            // Destroy existing HLS instance if any
+            if (window.hlsInstance) {
+                window.hlsInstance.destroy();
+            }
+
+            // Add cache busting timestamp
+            const cacheBuster = Date.now();
+            const hlsUrlWithCache = song.hls_master_url + '?v=' + cacheBuster;
+
+            const hls = new Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 90,
+                xhrSetup: function(xhr, url) {
+                    // Add cache buster to all HLS requests
+                    if (url.indexOf('?') === -1 && url.indexOf('.m3u8') !== -1) {
+                        xhr.open('GET', url + '?v=' + cacheBuster, true);
+                    }
+                }
+            });
+
+            hls.loadSource(hlsUrlWithCache);
+            hls.attachMedia(audioPlayer);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                console.log('✅ HLS manifest parsed, quality levels:', hls.levels.length);
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.log('🔄 HLS error, falling back to standard audio:', data.type);
+                    hls.destroy();
+                    audioPlayer.src = song.audio_file_128 || song.audio_file;
+                }
+            });
+
+            // Track quality level switches
+            hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                const level = hls.levels[data.level];
+                console.log('📊 Switched to quality:', level.bitrate / 1000 + 'kbps');
+            });
+
+            window.hlsInstance = hls;
+
+        } else if (audioPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native HLS support (iOS Safari)
+            console.log('🎵 Loading HLS (native):', song.hls_master_url);
+            audioPlayer.src = song.hls_master_url;
+
+        } else {
+            // No HLS support, use fallback
+            console.log('📻 No HLS support, using standard audio');
+            audioPlayer.src = song.audio_file_128 || song.audio_file;
+        }
+
+    } else {
+        // No HLS available, use standard audio
+        audioPlayer.src = song.audio_file_128 || song.audio_file;
+    }
+}
+
 // Regular playSong (without queue context)
 function playSong(songId) {
     const song = allSongs.find(s => s.id === songId);
@@ -801,8 +875,8 @@ function playSong(songId) {
     // Show loading indicators
     showAudioLoading();
 
-    // Update audio source (use optimized version if available)
-    audioPlayer.src = song.audio_file_128 || song.audio_file;
+    // Load audio source (HLS-aware)
+    loadAudioSource(song);
 
     // Android-compatible play with error handling
     const playPromise = audioPlayer.play();
@@ -2862,5 +2936,16 @@ document.body.addEventListener('touchmove', (e) => {
         e.preventDefault();
     }
 }, { passive: false });
+
+// ========================================
+// HLS CLEANUP
+// ========================================
+// Cleanup HLS instance on page unload
+window.addEventListener('beforeunload', () => {
+    if (window.hlsInstance) {
+        console.log('🧹 Cleaning up HLS instance');
+        window.hlsInstance.destroy();
+    }
+});
 
 console.log('🎵 Stage Music Mobile - Ready!');

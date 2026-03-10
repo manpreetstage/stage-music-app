@@ -74,14 +74,50 @@ app.get('/', (req, res, next) => {
     next();
 });
 
-// Disable caching in development
+// Smart caching strategy - NO CACHE for JS/HTML, cache images
 app.use((req, res, next) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    const path = req.path;
+
+    // NEVER cache JavaScript - always fetch fresh for updates
+    if (path.match(/\.js$/)) {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+    // NEVER cache HTML - always check for updates
+    else if (path.match(/\.(html|htm)$/) || path === '/mobile/' || path === '/mobile') {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+    // Cache images and fonts aggressively (they don't change)
+    else if (path.match(/\.(jpg|jpeg|png|gif|webp|svg|woff|woff2|ttf|eot|ico)$/)) {
+        res.set('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
+    }
+    // Cache CSS for short time (allows updates)
+    else if (path.match(/\.css$/)) {
+        res.set('Cache-Control', 'public, max-age=3600'); // 1 hour
+    }
+    // No cache for API endpoints (will be handled individually)
+    else if (path.startsWith('/api/')) {
+        // Let individual routes set cache headers
+    }
+    // Default: no cache
+    else {
+        res.set('Cache-Control', 'no-cache');
+    }
+
     next();
 });
 
-app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
+app.use(express.static('public', {
+    maxAge: '1y', // Static files cached for 1 year
+    immutable: true
+}));
+app.use('/uploads', express.static('uploads', {
+    maxAge: '1y',
+    immutable: true
+}));
 
 // Keep directories for backward compatibility during migration
 const uploadsDir = './uploads/songs';
@@ -389,8 +425,17 @@ app.get('/api/songs', (req, res) => {
     const language = req.query.language;
     const limit = parseInt(req.query.limit) || null;
     const offset = parseInt(req.query.offset) || 0;
+    const lite = req.query.lite === 'true'; // Lite mode for mobile
 
-    let sql = 'SELECT * FROM songs';
+    // Use lite mode for faster response (only essential fields)
+    let sql = lite
+        ? `SELECT id, title, singer, language, cover_thumb, cover_mobile,
+           audio_file_128, audio_file_256, audio_file, plays,
+           hls_master_url, has_hls FROM songs`
+        : `SELECT id, title, singer, music_director, composer, company, lyrics,
+           audio_file, audio_file_128, audio_file_256, cover_image, cover_thumb,
+           cover_mobile, duration, plays, language, album_id, created_at,
+           hls_master_url, has_hls FROM songs`;
     let params = [];
 
     if (language && language !== 'All') {
@@ -409,6 +454,10 @@ app.get('/api/songs', (req, res) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
+        }
+        // Cache for 5 minutes on mobile
+        if (lite) {
+            res.setHeader('Cache-Control', 'public, max-age=300');
         }
         res.json({ songs: rows });
     });
@@ -548,8 +597,14 @@ app.delete('/api/featured-songs/:id', (req, res) => {
 
 // Get quick picks (ONLY admin selected, no auto-fill)
 app.get('/api/quick-picks', (req, res) => {
+    // Optimized query - only essential fields for faster response
     const query = `
-        SELECT s.*, qp.position
+        SELECT
+            s.id, s.title, s.singer, s.language,
+            s.cover_thumb, s.cover_mobile, s.cover_image,
+            s.audio_file_128, s.audio_file_256, s.audio_file,
+            s.hls_master_url, s.has_hls,
+            qp.position
         FROM songs s
         JOIN quick_picks qp ON s.id = qp.song_id
         ORDER BY qp.position ASC
@@ -561,6 +616,8 @@ app.get('/api/quick-picks', (req, res) => {
             res.status(500).json({ error: err.message });
             return;
         }
+        // Enable aggressive caching for Quick Picks
+        res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
         res.json({ songs: quickPicks });
     });
 });
