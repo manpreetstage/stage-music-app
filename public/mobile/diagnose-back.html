@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Back Button Diagnostic</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            padding: 16px;
+            font-size: 14px;
+        }
+        h1 {
+            color: #0ff;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .status {
+            background: #111;
+            padding: 12px;
+            margin: 8px 0;
+            border-left: 4px solid #0f0;
+            border-radius: 4px;
+        }
+        .status.error {
+            border-left-color: #f00;
+            color: #f00;
+        }
+        .status.warning {
+            border-left-color: #ff0;
+            color: #ff0;
+        }
+        .log {
+            background: #0a0a0a;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #222;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 11px;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            margin: 8px 8px 8px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .counter {
+            display: inline-block;
+            background: #222;
+            padding: 4px 12px;
+            border-radius: 4px;
+            margin-left: 8px;
+            color: #0ff;
+            font-weight: bold;
+        }
+        .view {
+            display: none;
+            background: #1a1a1a;
+            padding: 20px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 2px solid #0f0;
+        }
+        .view.active {
+            display: block;
+        }
+        .alert-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f00;
+            color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            display: none;
+            z-index: 9999;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 BACK BUTTON DIAGNOSTIC</h1>
+
+    <!-- Status Display -->
+    <div id="status-container">
+        <div class="status">
+            ⏱️ Page Loaded: <span id="load-time">--</span>
+        </div>
+        <div class="status">
+            📜 History Length: <span id="history-length" class="counter">0</span>
+        </div>
+        <div class="status">
+            🔙 Back Pressed: <span id="back-count" class="counter">0</span>
+        </div>
+        <div class="status">
+            📱 In WebView: <span id="webview-status" class="counter">Unknown</span>
+        </div>
+        <div class="status">
+            🎯 Current View: <span id="current-view" class="counter">Home</span>
+        </div>
+        <div class="status">
+            ⚡ Popstate Fired: <span id="popstate-count" class="counter">0</span>
+        </div>
+        <div class="status">
+            🚨 Errors: <span id="error-count" class="counter">0</span>
+        </div>
+    </div>
+
+    <!-- Test Buttons -->
+    <div style="margin: 20px 0;">
+        <button onclick="openTestView()">Open Test View</button>
+        <button onclick="addHistory()">Add History</button>
+        <button onclick="testBackButton()">Simulate Back</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <!-- Test View -->
+    <div class="view" id="test-view">
+        <h2 style="color: #0ff; margin-bottom: 12px;">🧪 Test View Open</h2>
+        <p>Press device BACK button now!</p>
+        <p>This view should close, NOT exit app.</p>
+        <button onclick="closeTestView()">Close View</button>
+    </div>
+
+    <!-- Event Log -->
+    <div class="log" id="event-log">
+        <strong style="color: #0ff;">📋 EVENT LOG:</strong>
+        <div id="log-entries"></div>
+    </div>
+
+    <!-- Alert Box for Back Press -->
+    <div class="alert-box" id="alert-box">
+        ⬅️ BACK PRESSED!
+    </div>
+
+    <script>
+        // ==============================================
+        // DIAGNOSTIC SCRIPT
+        // ==============================================
+
+        let backCount = 0;
+        let popstateCount = 0;
+        let errorCount = 0;
+        const startTime = Date.now();
+
+        // Update status display
+        function updateStatus() {
+            document.getElementById('load-time').textContent =
+                Math.floor((Date.now() - startTime) / 1000) + 's ago';
+            document.getElementById('history-length').textContent = history.length;
+            document.getElementById('back-count').textContent = backCount;
+            document.getElementById('popstate-count').textContent = popstateCount;
+            document.getElementById('error-count').textContent = errorCount;
+
+            // Detect webview
+            const ua = navigator.userAgent.toLowerCase();
+            const isWv = ua.indexOf('wv') > -1 ||
+                        window.location.href.indexOf('stage://') > -1 ||
+                        ua.indexOf('clevertap') > -1;
+            document.getElementById('webview-status').textContent = isWv ? 'YES ✅' : 'NO ❌';
+
+            // Current view
+            const testView = document.getElementById('test-view');
+            const isTestOpen = testView && testView.classList.contains('active');
+            document.getElementById('current-view').textContent = isTestOpen ? 'Test View' : 'Home';
+        }
+
+        // Log event
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            let color = '#0f0';
+            if (type === 'error') color = '#f00';
+            if (type === 'warning') color = '#ff0';
+            if (type === 'success') color = '#0ff';
+
+            entry.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <span style="color: ${color}">${message}</span>
+            `;
+
+            const logEntries = document.getElementById('log-entries');
+            logEntries.insertBefore(entry, logEntries.firstChild);
+
+            // Keep only last 50 entries
+            while (logEntries.children.length > 50) {
+                logEntries.removeChild(logEntries.lastChild);
+            }
+
+            // Also log to console
+            console.log(`[${timestamp}] ${message}`);
+
+            updateStatus();
+        }
+
+        // Show visual alert
+        function showAlert(message) {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+            setTimeout(() => {
+                alertBox.style.display = 'none';
+            }, 1000);
+        }
+
+        // Test functions
+        function openTestView() {
+            document.getElementById('test-view').classList.add('active');
+            log('🟢 Test view opened', 'success');
+            updateStatus();
+        }
+
+        function closeTestView() {
+            document.getElementById('test-view').classList.remove('active');
+            log('🔴 Test view closed', 'success');
+            updateStatus();
+        }
+
+        function addHistory() {
+            history.pushState({ test: true }, '', window.location.href);
+            log('➕ Added history entry', 'info');
+        }
+
+        function testBackButton() {
+            log('🧪 Simulating back button press...', 'warning');
+            history.back();
+        }
+
+        function clearLog() {
+            document.getElementById('log-entries').innerHTML = '';
+            log('🗑️ Log cleared', 'info');
+        }
+
+        // ==============================================
+        // EVENT LISTENERS
+        // ==============================================
+
+        // Listen for popstate (back button)
+        window.addEventListener('popstate', function(event) {
+            popstateCount++;
+            backCount++;
+
+            showAlert('⬅️ BACK PRESSED!');
+            log('🔙 POPSTATE EVENT FIRED!', 'success');
+            log(`   Event data: ${JSON.stringify(event.state)}`, 'info');
+
+            // Check current view
+            const testView = document.getElementById('test-view');
+            if (testView && testView.classList.contains('active')) {
+                log('   📍 Test view is open, closing it...', 'info');
+                closeTestView();
+
+                // Re-add history
+                history.pushState({ restored: true }, '', window.location.href);
+                log('   ✅ Re-added history entry', 'success');
+            } else {
+                log('   📍 On home page', 'warning');
+                log('   ⚠️ Should show confirmation here!', 'warning');
+
+                // Re-add history to prevent exit
+                history.pushState({ trap: true }, '', window.location.href);
+                log('   ✅ Re-added history trap', 'success');
+
+                // Show confirmation
+                const shouldExit = confirm('Exit to app home?');
+                log(`   User choice: ${shouldExit ? 'Exit' : 'Stay'}`, shouldExit ? 'error' : 'success');
+            }
+
+            updateStatus();
+        });
+
+        // Listen for hashchange
+        window.addEventListener('hashchange', function(event) {
+            log('🔗 HASHCHANGE EVENT', 'warning');
+            log(`   Old: ${event.oldURL}`, 'info');
+            log(`   New: ${event.newURL}`, 'info');
+        });
+
+        // Listen for beforeunload
+        window.addEventListener('beforeunload', function(event) {
+            log('⚠️ BEFOREUNLOAD EVENT', 'warning');
+            event.preventDefault();
+            event.returnValue = '';
+        });
+
+        // Listen for unload
+        window.addEventListener('unload', function(event) {
+            log('🚪 UNLOAD EVENT', 'error');
+        });
+
+        // Listen for pagehide
+        window.addEventListener('pagehide', function(event) {
+            log('👋 PAGEHIDE EVENT', 'error');
+        });
+
+        // Catch all errors
+        window.addEventListener('error', function(event) {
+            errorCount++;
+            log(`❌ ERROR: ${event.message}`, 'error');
+            log(`   File: ${event.filename}:${event.lineno}`, 'error');
+            updateStatus();
+        });
+
+        // ==============================================
+        // INITIALIZATION
+        // ==============================================
+
+        function init() {
+            log('🚀 Diagnostic page initialized', 'success');
+            log(`📱 User Agent: ${navigator.userAgent}`, 'info');
+            log(`🌐 URL: ${window.location.href}`, 'info');
+            log(`📜 Initial history length: ${history.length}`, 'info');
+
+            // Add initial history buffer
+            log('📚 Adding initial history buffer...', 'info');
+            for (let i = 0; i < 5; i++) {
+                history.pushState({ init: i }, '', window.location.href);
+            }
+            log(`✅ History buffer added (now ${history.length})`, 'success');
+
+            // Update status every second
+            setInterval(updateStatus, 1000);
+
+            log('', 'info');
+            log('🧪 TEST INSTRUCTIONS:', 'success');
+            log('1. Click "Open Test View" button', 'info');
+            log('2. Press device BACK button', 'info');
+            log('3. Watch this log for events', 'info');
+            log('4. If nothing happens, BACK is not working!', 'error');
+            log('', 'info');
+        }
+
+        // Run on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Monitor history length
+        setInterval(function() {
+            const len = history.length;
+            if (len < 3) {
+                log(`⚠️ History too short (${len}), adding more...`, 'warning');
+                for (let i = 0; i < 5; i++) {
+                    history.pushState({ emergency: i }, '', window.location.href);
+                }
+            }
+        }, 1000);
+
+    </script>
+</body>
+</html>
