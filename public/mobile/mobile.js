@@ -3015,6 +3015,69 @@ function setupNavigationHistory() {
         setTimeout(() => { isNavigating = false; }, 150);
     });
 
+    // ============================================
+    // FLUTTER APP BACK BUTTON HANDLER
+    // Listen for back button event from Flutter app
+    // ============================================
+    window.addEventListener('appbackbutton', (event) => {
+        console.log('📱 Flutter back button pressed!');
+        
+        if (isNavigating) {
+            console.log('⏭️ Already navigating, skip');
+            return;
+        }
+
+        isNavigating = true;
+
+        // Check what's currently visible
+        const isPlayerOpen = fullPlayer.classList.contains('active');
+        const isCategoryOpen = document.getElementById('category-view')?.classList.contains('active');
+        const isSearchOpen = document.getElementById('search-view')?.classList.contains('active');
+        const isLibraryOpen = document.getElementById('library-view')?.classList.contains('active');
+        const isProfileOpen = document.getElementById('profile-view')?.classList.contains('active');
+
+        console.log('📱 Player:', isPlayerOpen, 'Category:', isCategoryOpen, 'Search:', isSearchOpen);
+
+        if (isPlayerOpen) {
+            console.log('→ Closing player');
+            fullPlayer.classList.remove('active');
+            const hasUnderlyingView = isCategoryOpen || isSearchOpen || isLibraryOpen || isProfileOpen;
+            if (!hasUnderlyingView) {
+                updateBodyOverflow();
+            }
+            navigationStack.pop();
+        } else if (isSearchOpen) {
+            console.log('→ Closing search');
+            hideSearchView();
+            updateBottomNav('home');
+            navigationStack.pop();
+        } else if (isLibraryOpen) {
+            console.log('→ Closing library');
+            hideLibraryView();
+            updateBottomNav('home');
+            navigationStack.pop();
+        } else if (isProfileOpen) {
+            console.log('→ Closing profile');
+            hideProfileView();
+            updateBottomNav('home');
+            navigationStack.pop();
+        } else if (isCategoryOpen) {
+            console.log('→ Closing category');
+            const categoryView = document.getElementById('category-view');
+            categoryView.classList.remove('active');
+            updateBodyOverflow();
+            navigationStack.pop();
+        } else {
+            // On home - tell Flutter to exit
+            console.log('→ On home, telling Flutter to exit');
+            if (window.Flutter && window.Flutter.postMessage) {
+                window.Flutter.postMessage('backPressed', {});
+            }
+        }
+
+        setTimeout(() => { isNavigating = false; }, 150);
+    });
+
     console.log('✅ Navigation history ready');
 }
 
