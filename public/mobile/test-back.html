@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Back Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+        }
+        .page {
+            display: none;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .page.active {
+            display: block;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin: 10px 0;
+            width: 100%;
+        }
+        .log {
+            background: #0a0a0a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Back Button Test</h1>
+    <div class="log" id="log"></div>
+
+    <div class="page active" id="page-home">
+        <h2>📱 Home Page</h2>
+        <button onclick="goToPage2()">Go to Page 2 →</button>
+        <p>Press device back button when on Page 2 to test</p>
+    </div>
+
+    <div class="page" id="page-2">
+        <h2>📄 Page 2</h2>
+        <button onclick="goToPage3()">Go to Page 3 →</button>
+        <button onclick="goBack()">← Go Back (Manual)</button>
+    </div>
+
+    <div class="page" id="page-3">
+        <h2>🎵 Page 3</h2>
+        <button onclick="goBack()">← Go Back (Manual)</button>
+    </div>
+
+    <script>
+        let currentPage = 'home';
+
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logEl.innerHTML = `[${time}] ${msg}<br>` + logEl.innerHTML;
+            console.log(msg);
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            currentPage = pageId;
+            log(`✅ Showing page: ${pageId}`);
+        }
+
+        function goToPage2() {
+            log('📍 Pushing state: page-2');
+            history.pushState({ page: '2' }, '', '');
+            showPage('2');
+        }
+
+        function goToPage3() {
+            log('📍 Pushing state: page-3');
+            history.pushState({ page: '3' }, '', '');
+            showPage('3');
+        }
+
+        function goBack() {
+            log('⬅️ Manual back clicked');
+            history.back();
+        }
+
+        // Listen for back button
+        window.addEventListener('popstate', (event) => {
+            log(`🔙 POPSTATE fired! State: ${JSON.stringify(event.state)}`);
+
+            if (!event.state) {
+                log('→ Going to home');
+                showPage('home');
+            } else if (event.state.page === '2') {
+                log('→ Going to page 2');
+                showPage('2');
+            } else if (event.state.page === '3') {
+                log('→ Going to page 3');
+                showPage('3');
+            }
+        });
+
+        // Initialize
+        history.replaceState({ page: 'home' }, '', '');
+        log('🚀 Test initialized');
+        log('📱 Try: Home → Page 2 → Page 3 → Press device back button');
+    </script>
+</body>
+</html>

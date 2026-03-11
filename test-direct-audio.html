@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Audio Test - Do Lugai</title>
+</head>
+<body>
+    <h1>Direct Audio Test - Do Lugai</h1>
+
+    <h2>128k M4A File:</h2>
+    <audio controls src="https://stage-music-files.s3.ap-south-1.amazonaws.com/songs/1773037679577-44087114_128.m4a" style="width: 100%;"></audio>
+
+    <h2>256k M4A File:</h2>
+    <audio controls src="https://stage-music-files.s3.ap-south-1.amazonaws.com/songs/1773037679577-44087114_256.m4a" style="width: 100%;"></audio>
+
+    <h2>Original WAV File:</h2>
+    <audio controls src="https://stage-music-files.s3.ap-south-1.amazonaws.com/songs/1770980518209-470938620.wav" style="width: 100%;"></audio>
+
+    <div id="status" style="margin-top: 20px; padding: 20px; background: #f0f0f0;">
+        <h3>Status:</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const audios = document.querySelectorAll('audio');
+        const log = document.getElementById('log');
+
+        function addLog(msg) {
+            const p = document.createElement('p');
+            p.textContent = new Date().toLocaleTimeString() + ' - ' + msg;
+            log.appendChild(p);
+        }
+
+        audios.forEach((audio, index) => {
+            const label = ['128k M4A', '256k M4A', 'WAV'][index];
+
+            audio.addEventListener('loadstart', () => addLog(`${label}: Loading started`));
+            audio.addEventListener('loadeddata', () => addLog(`${label}: ✅ Data loaded`));
+            audio.addEventListener('canplay', () => addLog(`${label}: ✅ Can play`));
+            audio.addEventListener('playing', () => addLog(`${label}: ▶️ Playing`));
+            audio.addEventListener('error', (e) => {
+                addLog(`${label}: ❌ Error - ${audio.error ? audio.error.message : 'Unknown'}`);
+            });
+        });
+
+        addLog('Audio players initialized. Click play to test.');
+    </script>
+</body>
+</html>

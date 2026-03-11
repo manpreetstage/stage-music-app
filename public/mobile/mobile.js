@@ -1166,11 +1166,19 @@ function togglePlay() {
 }
 
 function updatePlayButton(playing) {
-    const playIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
-    const pauseIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+    const playIcon = `<div class="play-btn-ring"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
+    const pauseIcon = `<div class="play-btn-ring"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></div>`;
 
     miniPlayBtn.innerHTML = playing ? pauseIcon : playIcon;
-    playBtnLarge.innerHTML = playing ? pauseIcon : playIcon;
+    
+    const playBtnLarge = document.getElementById('play-btn-large');
+    if (playing) {
+        playBtnLarge.innerHTML = pauseIcon + '<div class="loading-spinner" id="full-spinner"></div>';
+        playBtnLarge.classList.add('playing');
+    } else {
+        playBtnLarge.innerHTML = playIcon + '<div class="loading-spinner" id="full-spinner"></div>';
+        playBtnLarge.classList.remove('playing');
+    }
 }
 
 function toggleRepeat() {
@@ -1197,24 +1205,27 @@ function updateRepeatButton() {
     if (!repeatBtn) return;
 
     // Icons for different states - always visible
-    const repeatOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--text-secondary)">
+    const repeatOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
     </svg>`;
 
-    const repeatAllIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color)">
+    const repeatAllIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
     </svg>`;
 
-    const repeatOneIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color)">
+    const repeatOneIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
     </svg>`;
 
     if (repeatMode === 'off') {
         repeatBtn.innerHTML = repeatOffIcon;
+        repeatBtn.classList.remove('active');
     } else if (repeatMode === 'all') {
         repeatBtn.innerHTML = repeatAllIcon;
+        repeatBtn.classList.add('active');
     } else if (repeatMode === 'one') {
         repeatBtn.innerHTML = repeatOneIcon;
+        repeatBtn.classList.add('active');
     }
 }
 
@@ -1243,9 +1254,9 @@ function updateShuffleButton() {
     if (!shuffleBtn) return;
     
     if (isShuffleOn) {
-        shuffleBtn.style.color = 'var(--primary-color)';
+        shuffleBtn.classList.add('active');
     } else {
-        shuffleBtn.style.color = 'var(--text-secondary)';
+        shuffleBtn.classList.remove('active');
     }
 }
 

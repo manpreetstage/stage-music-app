@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HLS Test V2 - Cache Busted</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <h1>HLS Playback Test V2 - Do Lugai</h1>
+    <p><strong>Cache Busted Version - <?php echo time(); ?></strong></p>
+
+    <audio id="audio" controls autoplay style="width: 100%;"></audio>
+
+    <div style="margin-top: 20px; padding: 20px; background: #f0f0f0; font-family: monospace;">
+        <h3>Status:</h3>
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        const audio = document.getElementById('audio');
+        const logsDiv = document.getElementById('logs');
+        // Add timestamp to bust cache
+        const timestamp = Date.now();
+        const hlsUrl = 'https://stage-music-files.s3.ap-south-1.amazonaws.com/hls/113/master.m3u8?v=' + timestamp;
+
+        function addLog(message, color = 'black') {
+            const logEntry = document.createElement('div');
+            logEntry.style.color = color;
+            logEntry.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+            logsDiv.appendChild(logEntry);
+        }
+
+        addLog('🚀 Starting HLS test V2 (Cache Busted)...', 'blue');
+        addLog('📍 Master URL: ' + hlsUrl, 'gray');
+
+        if (Hls.isSupported()) {
+            addLog('✅ HLS.js is supported', 'green');
+
+            const hls = new Hls({
+                debug: true, // Enable debug mode
+                enableWorker: true,
+                xhrSetup: function(xhr, url) {
+                    // Log all XHR requests
+                    addLog('🌐 XHR Request: ' + url, 'blue');
+                }
+            });
+
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(audio);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                addLog('✅ Manifest parsed successfully!', 'green');
+                addLog('📊 Quality levels found: ' + data.levels.length, 'blue');
+                data.levels.forEach((level, index) => {
+                    addLog(`   Level ${index}: ${level.bitrate / 1000}kbps - URL: ${level.url[0]}`, 'gray');
+                });
+                addLog('▶️ Auto-playing...', 'green');
+            });
+
+            hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
+                addLog('📋 Level playlist loaded: ' + data.details.url, 'purple');
+                addLog('   Segments in playlist: ' + data.details.fragments.length, 'purple');
+                if (data.details.fragments[0]) {
+                    addLog('   First segment URL: ' + data.details.fragments[0].url, 'purple');
+                }
+            });
+
+            hls.on(Hls.Events.FRAG_LOADING, (event, data) => {
+                addLog('📦 Loading segment: ' + data.frag.url, 'blue');
+            });
+
+            hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+                addLog('✅ Loaded segment: ' + data.frag.url, 'green');
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    addLog('❌ FATAL ERROR: ' + data.type + ' - ' + data.details, 'red');
+                    if (data.response) {
+                        addLog('   Response code: ' + data.response.code, 'red');
+                        addLog('   Response URL: ' + data.response.url, 'red');
+                    }
+                    if (data.frag) {
+                        addLog('   Fragment URL: ' + data.frag.url, 'red');
+                        addLog('   Fragment relurl: ' + data.frag.relurl, 'red');
+                        addLog('   Fragment baseurl: ' + data.frag.baseurl, 'red');
+                    }
+                } else {
+                    addLog('⚠️ Warning: ' + data.type + ' - ' + data.details, 'orange');
+                    if (data.frag) {
+                        addLog('   Trying to load: ' + data.frag.url, 'orange');
+                    }
+                }
+            });
+
+            audio.addEventListener('playing', () => {
+                addLog('▶️ Playback started!', 'green');
+            });
+
+            audio.addEventListener('error', (e) => {
+                addLog('❌ Audio error: ' + (audio.error ? audio.error.message : 'Unknown'), 'red');
+            });
+
+        } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+            addLog('✅ Native HLS support (Safari)', 'green');
+            audio.src = hlsUrl;
+        } else {
+            addLog('❌ HLS not supported in this browser', 'red');
+        }
+    </script>
+</body>
+</html>
