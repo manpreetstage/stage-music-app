@@ -18,6 +18,9 @@ let isPlayingFromQueue = false;
 // Repeat Mode (off, all, one)
 let repeatMode = 'off'; // 'off', 'all', 'one'
 
+// Shuffle Mode
+let isShuffleOn = false;
+
 // Listening Milestone Tracking
 let milestonesReached = {
     '30s': false,
@@ -1193,8 +1196,8 @@ function updateRepeatButton() {
     const repeatBtn = document.getElementById('repeat-btn');
     if (!repeatBtn) return;
 
-    // Icons for different states
-    const repeatOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.5">
+    // Icons for different states - always visible
+    const repeatOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--text-secondary)">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
     </svg>`;
 
@@ -1204,19 +1207,66 @@ function updateRepeatButton() {
 
     const repeatOneIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary-color)">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
-        <text x="12" y="16" text-anchor="middle" font-size="10" fill="var(--primary-color)" font-weight="bold">1</text>
     </svg>`;
 
     if (repeatMode === 'off') {
         repeatBtn.innerHTML = repeatOffIcon;
-        repeatBtn.style.opacity = '0.5';
     } else if (repeatMode === 'all') {
         repeatBtn.innerHTML = repeatAllIcon;
-        repeatBtn.style.opacity = '1';
     } else if (repeatMode === 'one') {
         repeatBtn.innerHTML = repeatOneIcon;
-        repeatBtn.style.opacity = '1';
     }
+}
+
+function toggleShuffle() {
+    // Toggle shuffle
+    isShuffleOn = !isShuffleOn;
+    
+    updateShuffleButton();
+    console.log('🔀 Shuffle:', isShuffleOn ? 'ON' : 'OFF');
+    
+    // If turning on, shuffle the current queue
+    if (isShuffleOn && currentQueue.length > 0) {
+        shuffleCurrentQueue();
+    }
+    
+    // Track shuffle toggle
+    if (window.tracker) {
+        window.tracker.trackEvent('shuffle_toggled', {
+            is_shuffle_on: isShuffleOn
+        });
+    }
+}
+
+function updateShuffleButton() {
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    if (!shuffleBtn) return;
+    
+    if (isShuffleOn) {
+        shuffleBtn.style.color = 'var(--primary-color)';
+    } else {
+        shuffleBtn.style.color = 'var(--text-secondary)';
+    }
+}
+
+function shuffleCurrentQueue() {
+    if (!currentQueue || currentQueue.length <= 1) return;
+    
+    // Fisher-Yates shuffle
+    for (let i = currentQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentQueue[i], currentQueue[j]] = [currentQueue[j], currentQueue[i]];
+    }
+    
+    // Find current song position in shuffled queue
+    if (currentSong) {
+        const currentIndex = currentQueue.findIndex(s => s.id === currentSong.id);
+        if (currentIndex > 0) {
+            currentQueueIndex = currentIndex;
+        }
+    }
+    
+    console.log('🔀 Queue shuffled, current index:', currentQueueIndex);
 }
 
 async function playNext() {
@@ -1237,7 +1287,13 @@ async function playNext() {
 
     // Smart Queue System
     if (isPlayingFromQueue && currentQueue.length > 0) {
-        currentQueueIndex++;
+        // If shuffle is on, pick random song
+        if (isShuffleOn) {
+            const randomIndex = Math.floor(Math.random() * currentQueue.length);
+            currentQueueIndex = randomIndex;
+        } else {
+            currentQueueIndex++;
+        }
 
         // If still in queue, play next song
         if (currentQueueIndex < currentQueue.length) {
@@ -1426,6 +1482,13 @@ function setupEventListeners() {
     if (repeatBtn) {
         repeatBtn.addEventListener('click', toggleRepeat);
         updateRepeatButton(); // Initialize button state
+    }
+
+    // Shuffle button
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    if (shuffleBtn) {
+        shuffleBtn.addEventListener('click', toggleShuffle);
+        updateShuffleButton(); // Initialize button state
     }
 
     // Add to Playlist button in full player
@@ -2894,11 +2957,6 @@ function showCategoryView(categoryName, songs, languageOverride = null, contextT
                         <div class="category-song-info">
                             <div class="category-song-title">${song.title}</div>
                             <div class="category-song-artist">${song.singer || 'Unknown'}</div>
-                        </div>
-                        <div class="category-song-more">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                            </svg>
                         </div>
                     </div>
                 `).join('')}
