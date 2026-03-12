@@ -612,18 +612,26 @@ body {
     transform: scale(0.9);
 }
 
-/* Repeat container with label */
-.repeat-container {
+/* Repeat badge */
+.repeat-badge {
+    position: absolute;
+    font-size: 8px;
+    font-weight: bold;
+    color: var(--primary-color);
+    bottom: 2px;
+    right: 2px;
+}
+
+#repeat-btn {
+    position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-.repeat-label {
-    font-size: 10px;
-    color: var(--text-secondary);
-    margin-top: 2px;
+/* Shuffle and Repeat button active states */
+#shuffle-btn, #repeat-btn {
+    transition: all 0.2s ease;
 }
 
 /* Shuffle and Repeat button active states */
