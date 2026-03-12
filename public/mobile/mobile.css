@@ -604,10 +604,26 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: transform 0.1s ease, color 0.2s ease;
 }
 
 .control-btn:active {
     background: var(--bg-tertiary);
+    transform: scale(0.9);
+}
+
+/* Shuffle and Repeat button active states */
+#shuffle-btn, #repeat-btn {
+    transition: all 0.2s ease;
+}
+
+#shuffle-btn.active, #repeat-btn.active {
+    color: var(--primary-color) !important;
+    transform: scale(1.1);
+}
+
+#shuffle-btn:active, #repeat-btn:active {
+    transform: scale(0.95);
 }
 
 .control-btn-large {
@@ -669,15 +685,6 @@ body {
         transform: scale(1.4);
         opacity: 0;
     }
-}
-
-/* Shuffle and Repeat button active states */
-#shuffle-btn.active {
-    color: var(--primary-color) !important;
-}
-
-#repeat-btn.active {
-    color: var(--primary-color) !important;
 }
 
 /* ========================================
