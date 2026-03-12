@@ -1202,6 +1202,7 @@ function toggleRepeat() {
 
 function updateRepeatButton() {
     const repeatBtn = document.getElementById('repeat-btn');
+    const repeatLabel = document.getElementById('repeat-label');
     if (!repeatBtn) return;
 
     // Icons for different states - always visible
@@ -1220,12 +1221,15 @@ function updateRepeatButton() {
     if (repeatMode === 'off') {
         repeatBtn.innerHTML = repeatOffIcon;
         repeatBtn.classList.remove('active');
+        if (repeatLabel) repeatLabel.textContent = 'Off';
     } else if (repeatMode === 'all') {
         repeatBtn.innerHTML = repeatAllIcon;
         repeatBtn.classList.add('active');
+        if (repeatLabel) repeatLabel.textContent = 'All';
     } else if (repeatMode === 'one') {
         repeatBtn.innerHTML = repeatOneIcon;
         repeatBtn.classList.add('active');
+        if (repeatLabel) repeatLabel.textContent = '1';
     }
 }
 
