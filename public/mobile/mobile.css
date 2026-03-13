@@ -523,9 +523,13 @@ body {
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     border-radius: var(--radius-m);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
+}
+
+.album-art-loader.active {
+    display: flex;
 }
 
 .album-art-loader .spinner {

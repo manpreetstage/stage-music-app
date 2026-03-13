@@ -1109,7 +1109,7 @@ function showAudioLoading() {
 
     // Show album art loader
     const albumLoader = document.getElementById('album-art-loader');
-    if (albumLoader) albumLoader.style.display = 'flex';
+    if (albumLoader) albumLoader.classList.add('active');
 
     // Show spinner in play buttons
     const miniBtn = document.getElementById('mini-play-btn');
@@ -1132,7 +1132,7 @@ function hideAudioLoading() {
 
     // Hide album art loader
     const albumLoader = document.getElementById('album-art-loader');
-    if (albumLoader) albumLoader.style.display = 'none';
+    if (albumLoader) albumLoader.classList.remove('active');
 
     // Hide spinner in play buttons
     const miniBtn = document.getElementById('mini-play-btn');
