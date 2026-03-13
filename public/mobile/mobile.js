@@ -331,9 +331,10 @@ async function renderQuickPicks() {
     }
 
     try {
-        // Fetch fresh data in background (stale-while-revalidate)
-        const response = await fetch(`/api/quick-picks`, {
-            cache: 'default'
+        // Fetch fresh data with cache-busting
+        const response = await fetch(`/api/quick-picks?_t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
         });
 
         const data = await response.json();
