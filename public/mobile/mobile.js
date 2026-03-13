@@ -102,11 +102,17 @@ const minimizeBtn = document.getElementById('minimize-btn');
 // ========================================
 
 // Get best available cover image (handles empty strings)
-function getCoverImage(song) {
-    const thumb = song.cover_thumb && song.cover_thumb.trim();
-    const mobile = song.cover_mobile && song.cover_mobile.trim();
-    const image = song.cover_image;
-    return thumb || mobile || image || '/assets/placeholder.png';
+// quality: 'thumb' (150px), 'mobile' (500px), 'full' (original)
+function getCoverImage(song, quality = 'thumb') {
+    if (quality === 'full') {
+        // Return highest quality available
+        return song.cover_image || song.cover_mobile || song.cover_thumb || '/assets/placeholder.png';
+    } else if (quality === 'mobile') {
+        // Return mobile quality (500px)
+        return song.cover_mobile || song.cover_image || song.cover_thumb || '/assets/placeholder.png';
+    }
+    // Default: thumb (150px) for lists
+    return song.cover_thumb || song.cover_mobile || song.cover_image || '/assets/placeholder.png';
 }
 
 // ========================================
@@ -1077,14 +1083,14 @@ function playSong(songId) {
     }
 
     // Update mini player
-    miniCover.src = getCoverImage(song);
+    miniCover.src = getCoverImage(song, 'thumb');
     miniTitle.textContent = song.title;
     miniArtist.textContent = song.singer || 'Unknown';
     miniPlayer.style.display = 'flex';
     updatePlayButton(true);
 
-    // Update full player
-    albumArt.src = getCoverImage(song);
+    // Update full player - use mobile quality (better resolution)
+    albumArt.src = getCoverImage(song, 'mobile');
     songTitle.textContent = song.title;
     songArtist.textContent = song.singer || 'Unknown';
 
