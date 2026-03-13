@@ -1107,6 +1107,10 @@ function showAudioLoading() {
     const overlay = document.getElementById('audio-loading');
     if (overlay) overlay.classList.add('active');
 
+    // Show album art loader
+    const albumLoader = document.getElementById('album-art-loader');
+    if (albumLoader) albumLoader.style.display = 'flex';
+
     // Show spinner in play buttons
     const miniBtn = document.getElementById('mini-play-btn');
     const miniSpinner = document.getElementById('mini-spinner');
@@ -1119,6 +1123,27 @@ function showAudioLoading() {
     if (fullSpinner) fullSpinner.classList.add('active');
 
     console.log('⏳ Loading audio...');
+}
+
+function hideAudioLoading() {
+    // Hide loading overlay
+    const overlay = document.getElementById('audio-loading');
+    if (overlay) overlay.classList.remove('active');
+
+    // Hide album art loader
+    const albumLoader = document.getElementById('album-art-loader');
+    if (albumLoader) albumLoader.style.display = 'none';
+
+    // Hide spinner in play buttons
+    const miniBtn = document.getElementById('mini-play-btn');
+    const miniSpinner = document.getElementById('mini-spinner');
+    if (miniBtn) miniBtn.classList.remove('loading');
+    if (miniSpinner) miniSpinner.classList.remove('active');
+
+    const fullBtn = document.getElementById('play-btn-large');
+    const fullSpinner = document.getElementById('full-spinner');
+    if (fullBtn) fullBtn.classList.remove('loading');
+    if (fullSpinner) fullSpinner.classList.remove('active');
 }
 
 function hideAudioLoading() {
