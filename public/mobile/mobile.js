@@ -16,7 +16,7 @@ let queueContext = null; // { type: 'section'|'category', id: ..., name: ..., la
 let isPlayingFromQueue = false;
 
 // Repeat Mode (off, all, one)
-let repeatMode = 'off'; // 'off', 'all', 'one'
+let repeatMode = 'off'; // 'off', 'all'
 
 // Shuffle Mode
 let isShuffleOn = false;
@@ -1218,14 +1218,16 @@ function updateRepeatButton() {
     const repeatBtn = document.getElementById('repeat-btn');
     if (!repeatBtn) return;
 
-    // Only 2 states: off (normal) and all (loop)
+    // 2 states: off (normal) and all (loop)
     const repeatOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
-    </svg>`;
+    </svg>
+    <span class="repeat-badge">✕</span>`;
 
     const repeatAllIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
-    </svg>`;
+    </svg>
+    <span class="repeat-badge">1</span>`;
 
     if (repeatMode === 'off') {
         repeatBtn.innerHTML = repeatOffIcon;
@@ -1295,9 +1297,9 @@ async function playNext() {
         window.tracker.trackSongSkipped(currentSong, 'next');
     }
 
-    // Repeat One - replay current song (keep for backward compatibility)
-    if (repeatMode === 'one') {
-        console.log('🔂 Repeat One: Replaying', currentSong.title);
+    // Repeat All - repeat same song
+    if (repeatMode === 'all') {
+        console.log('🔁 Repeat: Replaying same song');
         audioPlayer.currentTime = 0;
         audioPlayer.play().catch(e => console.log('Play failed:', e));
         return;
