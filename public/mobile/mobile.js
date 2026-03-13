@@ -1198,11 +1198,9 @@ function updatePlayButton(playing) {
 }
 
 function toggleRepeat() {
-    // Cycle through: off -> all -> one -> off
+    // Cycle through: off -> all -> off
     if (repeatMode === 'off') {
         repeatMode = 'all';
-    } else if (repeatMode === 'all') {
-        repeatMode = 'one';
     } else {
         repeatMode = 'off';
     }
@@ -1220,29 +1218,20 @@ function updateRepeatButton() {
     const repeatBtn = document.getElementById('repeat-btn');
     if (!repeatBtn) return;
 
-    // Icons with badge for different states
+    // Only 2 states: off (normal) and all (loop)
     const repeatOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
     </svg>`;
 
     const repeatAllIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
-    </svg>
-    <span class="repeat-badge">∞</span>`;
-
-    const repeatOneIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
-    </svg>
-    <span class="repeat-badge">1</span>`;
+    </svg>`;
 
     if (repeatMode === 'off') {
         repeatBtn.innerHTML = repeatOffIcon;
         repeatBtn.classList.remove('active');
-    } else if (repeatMode === 'all') {
+    } else {
         repeatBtn.innerHTML = repeatAllIcon;
-        repeatBtn.classList.add('active');
-    } else if (repeatMode === 'one') {
-        repeatBtn.innerHTML = repeatOneIcon;
         repeatBtn.classList.add('active');
     }
 }
@@ -1306,7 +1295,7 @@ async function playNext() {
         window.tracker.trackSongSkipped(currentSong, 'next');
     }
 
-    // Repeat One - replay current song
+    // Repeat One - replay current song (keep for backward compatibility)
     if (repeatMode === 'one') {
         console.log('🔂 Repeat One: Replaying', currentSong.title);
         audioPlayer.currentTime = 0;

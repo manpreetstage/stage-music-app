@@ -631,16 +631,6 @@ body {
     transform: scale(0.9);
 }
 
-/* Repeat badge */
-.repeat-badge {
-    position: absolute;
-    font-size: 8px;
-    font-weight: bold;
-    color: var(--primary-color);
-    bottom: 2px;
-    right: 2px;
-}
-
 #repeat-btn {
     position: relative;
     display: flex;
