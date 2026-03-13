@@ -1261,6 +1261,8 @@ body {
     background: var(--bg-secondary);
     border-radius: var(--radius-l);
     flex-shrink: 0;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .up-next-title {
