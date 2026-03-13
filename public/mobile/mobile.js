@@ -1107,10 +1107,6 @@ function showAudioLoading() {
     const overlay = document.getElementById('audio-loading');
     if (overlay) overlay.classList.add('active');
 
-    // Show album art loader
-    const albumLoader = document.getElementById('album-art-loader');
-    if (albumLoader) albumLoader.classList.add('active');
-
     // Show spinner in play buttons
     const miniBtn = document.getElementById('mini-play-btn');
     const miniSpinner = document.getElementById('mini-spinner');
@@ -1129,10 +1125,6 @@ function hideAudioLoading() {
     // Hide loading overlay
     const overlay = document.getElementById('audio-loading');
     if (overlay) overlay.classList.remove('active');
-
-    // Hide album art loader
-    const albumLoader = document.getElementById('album-art-loader');
-    if (albumLoader) albumLoader.classList.remove('active');
 
     // Hide spinner in play buttons
     const miniBtn = document.getElementById('mini-play-btn');
