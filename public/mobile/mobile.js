@@ -104,15 +104,19 @@ const minimizeBtn = document.getElementById('minimize-btn');
 // Get best available cover image (handles empty strings)
 // quality: 'thumb' (150px), 'mobile' (500px), 'full' (original)
 function getCoverImage(song, quality = 'thumb') {
+    const cb = `?t=${Date.now()}`;
     if (quality === 'full') {
         // Return highest quality available
-        return song.cover_image || song.cover_mobile || song.cover_thumb || '/assets/placeholder.png';
+        const url = song.cover_image || song.cover_mobile || song.cover_thumb || '/assets/placeholder.png';
+        return url.includes('?') ? url + cb : url + cb;
     } else if (quality === 'mobile') {
         // Return mobile quality (500px)
-        return song.cover_mobile || song.cover_image || song.cover_thumb || '/assets/placeholder.png';
+        const url = song.cover_mobile || song.cover_image || song.cover_thumb || '/assets/placeholder.png';
+        return url.includes('?') ? url + cb : url + cb;
     }
     // Default: thumb (150px) for lists
-    return song.cover_thumb || song.cover_mobile || song.cover_image || '/assets/placeholder.png';
+    const url = song.cover_thumb || song.cover_mobile || song.cover_image || '/assets/placeholder.png';
+    return url.includes('?') ? url + cb : url + cb;
 }
 
 // ========================================
@@ -464,11 +468,13 @@ async function renderCustomSections() {
 
         scroll.innerHTML = sectionsWithCounts.map(section => {
             // If section has cover_image, use image instead of icon
+            const cb = `?t=${Date.now()}`;
             if (section.cover_image) {
+                const coverUrl = section.cover_image.includes('?') ? section.cover_image + cb : section.cover_image + cb;
                 return `
                     <div class="custom-section-card custom-section-with-image"
                          onclick="viewCustomSection(${section.id}, '${escapeHtml(section.name)}')">
-                        <img src="${section.cover_image}" alt="${escapeHtml(section.name)}" class="custom-section-cover-image">
+                        <img src="${coverUrl}" alt="${escapeHtml(section.name)}" class="custom-section-cover-image">
                         <div class="custom-section-overlay">
                             <div class="custom-section-name">${escapeHtml(section.name)}</div>
                             <div class="custom-section-count">${section.count} songs</div>
@@ -572,11 +578,13 @@ async function renderCategories() {
 
         scroll.innerHTML = data.categories.map(cat => {
             // If category has cover_image, use it; otherwise use icon
+            const cb = `?t=${Date.now()}`;
             if (cat.cover_image) {
                 console.log('✅ Using cover image for:', cat.name, cat.cover_image);
+                const coverUrl = cat.cover_image.includes('?') ? cat.cover_image + cb : cat.cover_image + cb;
                 return `
                     <div class="category-card category-card-with-image" onclick="viewCategory(${cat.id}, '${cat.name}')">
-                        <img src="${cat.cover_image}" alt="${cat.name}" class="category-cover-image">
+                        <img src="${coverUrl}" alt="${cat.name}" class="category-cover-image">
                         <div class="category-name-overlay">${cat.name}</div>
                     </div>
                 `;
@@ -771,13 +779,16 @@ async function renderAlbums() {
                             <h2 class="section-title">${language} Albums</h2>
                         </div>
                         <div class="horizontal-scroll">
-                            ${albums.map(album => `
+                            ${albums.map(album => {
+                                const cb = `?t=${Date.now()}`;
+                                const coverUrl = album.cover_image ? (album.cover_image.includes('?') ? album.cover_image + cb : album.cover_image + cb) : '/assets/default-cover.jpg';
+                                return `
                                 <div class="album-card-small" onclick="viewAlbum(${album.id}, '${escapeHtml(album.title)}')">
-                                    <img src="${album.cover_image || '/assets/default-cover.jpg'}" alt="${escapeHtml(album.title)}" class="album-cover-small">
+                                    <img src="${coverUrl}" alt="${escapeHtml(album.title)}" class="album-cover-small">
                                     <div class="album-title-small">${escapeHtml(album.title)}</div>
                                     <div class="album-subtitle-small">${album.song_count} songs</div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </section>
                 `;
