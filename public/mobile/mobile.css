@@ -446,6 +446,8 @@ body {
     z-index: 1500;
     display: none;
     flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .full-player.active {
@@ -476,7 +478,7 @@ body {
     flex-direction: column;
     gap: var(--space-xxl);
     align-items: center;
-    justify-content: flex-start;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
