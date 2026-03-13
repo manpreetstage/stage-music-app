@@ -446,8 +446,10 @@ body {
     z-index: 1500;
     display: none;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: scroll;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
 }
 
 .full-player.active {
