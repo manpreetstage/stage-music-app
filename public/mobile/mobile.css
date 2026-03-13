@@ -446,14 +446,25 @@ body {
     z-index: 1500;
     display: none;
     flex-direction: column;
-    overflow: scroll;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
 }
 
 .full-player.active {
     display: flex;
+}
+
+.player-content {
+    flex: 1;
+    padding: var(--space-xxl) var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xxl);
+    align-items: center;
+    min-height: 0;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scroll-behavior: smooth;
 }
 
 .player-header {
@@ -1249,6 +1260,7 @@ body {
     padding: var(--space-l);
     background: var(--bg-secondary);
     border-radius: var(--radius-l);
+    flex-shrink: 0;
 }
 
 .up-next-title {
