@@ -1045,8 +1045,7 @@ function playSong(songId) {
                 console.error('❌ Play failed:', error);
                 isPlaying = false;
                 hideAudioLoading(); // Hide loader on error
-                // Show error to user
-                alert('Cannot play song. Please tap play button.');
+                // Silently fail - no alert shown
             });
     } else {
         isPlaying = true;
